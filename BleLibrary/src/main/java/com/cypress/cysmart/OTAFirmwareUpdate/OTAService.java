@@ -18,12 +18,9 @@ import android.util.Log;
 import com.cypress.cysmart.CommonUtils.Constants;
 import com.cypress.cysmart.CommonUtils.GattAttributes;
 import com.cypress.cysmart.CommonUtils.Utils;
-import com.cypress.cysmart.DataModelClasses.OTABean;
 import com.cypress.cysmart.DataModelClasses.OTAFlashRowModel;
 import com.cypress.cysmart.Params.CommonParams;
 import com.renyu.blelibrary.utils.BLEFramework;
-
-import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 
@@ -57,7 +54,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
         registerReceiver(receiver, filter);
 
         mOTACharacteristic= BLEFramework.getBleFrameworkInstance().getCurrentCharacteristic();
-        mBluetoothDeviceAddress=BLEFramework.getBleFrameworkInstance().getMBluetoothDeviceAddress();
+        mBluetoothDeviceAddress=BLEFramework.getBleFrameworkInstance().getCurrentBluetoothDevice().getAddress();
     }
 
     @Nullable
@@ -118,7 +115,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
                                  */
                                 otaFirmwareWrite.OTAGetFlashSizeCmd(data, mCheckSumType, dataLength);
                                 Utils.setStringSharedPreference(context, Constants.PREF_BOOTLOADER_STATE, "" + BootLoaderCommands.GET_FLASH_SIZE);
-                                Log.d("BLEService", "执行获取flash大小的命令");
+                                Log.d("OTAService", "执行获取flash大小的命令");
                             }
                         }
 
@@ -165,7 +162,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
                                  */
                                 otaFirmwareWrite.OTAVerifyRowCmd(rowMSB, rowLSB, modelData, mCheckSumType);
                                 Utils.setStringSharedPreference(context, Constants.PREF_BOOTLOADER_STATE, "" + BootLoaderCommands.VERIFY_ROW);
-                                Log.d("BLEService", "执行获取flash大小的命令");
+                                Log.d("OTAService", "执行获取flash大小的命令");
                             }
                         }
                     }
@@ -217,7 +214,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
                                          */
                                         Utils.setStringSharedPreference(context, Constants.PREF_BOOTLOADER_STATE, "" + BootLoaderCommands.VERIFY_CHECK_SUM);
                                         otaFirmwareWrite.OTAVerifyCheckSumCmd(mCheckSumType);
-                                        Log.d("BLEService", "执行验证检查操作");
+                                        Log.d("OTAService", "执行验证检查操作");
                                     }
                                 }
                             }
@@ -236,7 +233,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
                                 //Getting the arrayID
                                 otaFirmwareWrite.OTAExitBootloaderCmd(mCheckSumType);
                                 Utils.setStringSharedPreference(context, Constants.PREF_BOOTLOADER_STATE, "" + BootLoaderCommands.EXIT_BOOTLOADER);
-                                Log.d("BLEService", "bootloader结束");
+                                Log.d("OTAService", "bootloader结束");
                             }
                         }
 
@@ -244,51 +241,40 @@ public class OTAService extends Service implements FileReadStatusUpdater {
                     else if(sharedPrefStatus.equalsIgnoreCase("" + BootLoaderCommands.EXIT_BOOTLOADER)){
                         CommonParams.mFileupgradeStarted = false;
                         saveDeviceAddress();
-                        Log.d("BLEService", "ota固件升级成功");
+                        Log.d("OTAService", "ota固件升级成功");
                         if (secondFileUpdatedNeeded()) {
-                            Log.d("BLEService", "堆栈升级成功完成。应用程序升级悬而未决");
-
-                            // 发射进度
-                            OTABean otaBean=new OTABean();
-                            otaBean.setProcess(-1);
-                            EventBus.getDefault().post(otaBean);
+                            Log.d("OTAService", "堆栈升级成功完成。应用程序升级悬而未决");
+                            BLEFramework.getBleFrameworkInstance().updateOTAProgress(-1);
                         }
                         else {
-                            Log.d("BLEService", "ota固件升级成功");
-
-                            // 发射进度
-                            OTABean otaBean=new OTABean();
-                            otaBean.setProcess(101);
-                            EventBus.getDefault().post(otaBean);
+                            Log.d("OTAService", "ota固件升级成功");
+                            BLEFramework.getBleFrameworkInstance().updateOTAProgress(101);
                         }
                         CommonParams.mFileupgradeStarted = false;
-                        if (BLEFramework.getBleFrameworkInstance().getCurrentGattInstance()!=null) {
-                            BLEFramework.getBleFrameworkInstance().getCurrentGattInstance().close();
+                        if (BLEFramework.getBleFrameworkInstance().getCurrentGatt()!=null) {
+                            BLEFramework.getBleFrameworkInstance().getCurrentGatt().close();
                         }
                         stopSelf();
                     }
                     if (extras.containsKey(Constants.EXTRA_ERROR_OTA)) {
                         String errorMessage = extras.getString(Constants.EXTRA_ERROR_OTA);
-                        Log.d("BLEService", errorMessage);
+                        Log.d("OTAService", errorMessage);
                         stopSelf();
 
-                        // 发射进度
-                        OTABean otaBean=new OTABean();
-                        otaBean.setProcess(-1);
-                        EventBus.getDefault().post(otaBean);
+                        BLEFramework.getBleFrameworkInstance().updateOTAProgress(-1);
                     }
                 }
                 if (action.equals(BluetoothDevice.ACTION_BOND_STATE_CHANGED)) {
                     final int state = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.ERROR);
                     if (state == BluetoothDevice.BOND_BONDING) {
                         // Bonding...
-                        Log.i("BLEService", "Bonding is in process....");
+                        Log.i("OTAService", "Bonding is in process....");
                     }
                     else if (state == BluetoothDevice.BOND_BONDED) {
-                        Log.d("BLEService", "Paired");
+                        Log.d("OTAService", "Paired");
                     }
                     else if (state == BluetoothDevice.BOND_NONE) {
-                        Log.d("BLEService", "Unpaired");
+                        Log.d("OTAService", "Unpaired");
                     }
                 }
             }
@@ -340,7 +326,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
         synchronized (BLEFramework.class) {
             writeOTABootLoaderCommand(characteristic, value);
             if (isExitBootloaderCmd) {
-                BLEFramework.getBleFrameworkInstance().setM_otaExitBootloaderCmdInProgress(true);
+                BLEFramework.getBleFrameworkInstance().endOTA();
             }
         }
     }
@@ -349,7 +335,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
         String serviceName = GattAttributes.lookupUUID(characteristic.getService().getUuid(), characteristic.getService().getUuid().toString());
         String characteristicName = GattAttributes.lookupUUID(characteristic.getUuid(), characteristic.getUuid().toString());
         String characteristicValue = Utils.ByteArraytoHex(value);
-        if (BLEFramework.getBleFrameworkInstance().getCurrentGattInstance() == null) {
+        if (BLEFramework.getBleFrameworkInstance().getCurrentGatt() == null) {
             return;
         }
         else {
@@ -358,9 +344,9 @@ public class OTAService extends Service implements FileReadStatusUpdater {
             int counter = 20;
             boolean status;
             do {
-                status = BLEFramework.getBleFrameworkInstance().getCurrentGattInstance().writeCharacteristic(characteristic);
+                status = BLEFramework.getBleFrameworkInstance().getCurrentGatt().writeCharacteristic(characteristic);
                 if(!status) {
-                    Log.v("CYSMART","writeCharacteristic() status: False");
+                    Log.v("OTAService","writeCharacteristic() status: False");
                     try {
                         Thread.sleep(100,0);
                     }
@@ -378,18 +364,18 @@ public class OTAService extends Service implements FileReadStatusUpdater {
                                 "Write request sent with value, " +
 
                                 "[ " + characteristicValue + " ]";
-                Log.i("CYSMART", dataLog);
-                Log.v("CYSMART", dataLog);
+                Log.i("OTAService", dataLog);
+                Log.v("OTAService", dataLog);
             }
             else {
-                Log.v("CYSMART", "writeOTABootLoaderCommand failed!");
+                Log.v("OTAService", "writeOTABootLoaderCommand failed!");
             }
         }
     }
 
     private void writeProgrammableData(int rowPosition) {
         int startPosition = Utils.getIntSharedPreference(OTAService.this, Constants.PREF_PROGRAM_ROW_START_POS);
-        Log.e("BLEService", "Row: " + rowPosition + "Start Pos: " + startPosition);
+        Log.e("OTAService", "Row: " + rowPosition + "Start Pos: " + startPosition);
         OTAFlashRowModel modelData = mFlashRowList.get(rowPosition);
         int verifyDataLength = modelData.mDataLength - startPosition;
         if (checkProgramRowCommandToSend(verifyDataLength)) {
@@ -409,7 +395,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
             otaFirmwareWrite.OTAProgramRowCmd(rowMSB, rowLSB, modelData.mArrayId, dataToSend, mCheckSumType);
             Utils.setStringSharedPreference(OTAService.this, Constants.PREF_BOOTLOADER_STATE,  ""+ BootLoaderCommands.PROGRAM_ROW);
             Utils.setIntSharedPreference(OTAService.this, Constants.PREF_PROGRAM_ROW_START_POS, 0);
-            Log.d("BLEService", "固件升级中");
+            Log.d("OTAService", "固件升级中");
         }
         else {
             int dataLength = BootLoaderCommands.MAX_DATA_SIZE;
@@ -427,7 +413,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
             otaFirmwareWrite.OTAProgramRowSendDataCmd(dataToSend, mCheckSumType);
             Utils.setStringSharedPreference(OTAService.this, Constants.PREF_BOOTLOADER_STATE, "" + BootLoaderCommands.SEND_DATA);
             Utils.setIntSharedPreference(OTAService.this, Constants.PREF_PROGRAM_ROW_START_POS, startPosition);
-            Log.d("BLEService", "固件升级中");
+            Log.d("OTAService", "固件升级中");
         }
     }
 
@@ -440,14 +426,11 @@ public class OTAService extends Service implements FileReadStatusUpdater {
 
     private void showProgress(int fileStatus, float fileLineNos, float totalLines) {
         if (fileStatus == 1) {
-            Log.i("BLEService", (int) fileLineNos+"  "+(int) totalLines+"  "+(int) ((fileLineNos / totalLines) * 100) + "%");
-            // 发射进度
-            OTABean otaBean=new OTABean();
-            otaBean.setProcess((int) ((fileLineNos / totalLines) * 100));
-            EventBus.getDefault().post(otaBean);
+            Log.i("OTAService", (int) fileLineNos+"  "+(int) totalLines+"  "+(int) ((fileLineNos / totalLines) * 100) + "%");
+            BLEFramework.getBleFrameworkInstance().updateOTAProgress((int) ((fileLineNos / totalLines) * 100));
         }
         if (fileStatus == 2) {
-            Log.d("BLEService", "结束");
+            Log.d("OTAService", "结束");
         }
     }
 
@@ -469,7 +452,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
 
     private boolean secondFileUpdatedNeeded() {
         String secondFilePath = Utils.getStringSharedPreference(OTAService.this, Constants.PREF_OTA_FILE_TWO_PATH);
-        Log.e("BLEService", "secondFilePath-->" + secondFilePath);
+        Log.e("OTAService", "secondFilePath-->" + secondFilePath);
         return mBluetoothDeviceAddress.equalsIgnoreCase(saveDeviceAddress())
                 && (!secondFilePath.equalsIgnoreCase("Default")
                 && (!secondFilePath.equalsIgnoreCase("")));
@@ -491,11 +474,11 @@ public class OTAService extends Service implements FileReadStatusUpdater {
 
         }
         if (this.mTotalLines == fileLine && mOTACharacteristic != null) {
-            Log.d("BLEService", "文件读取成功");
+            Log.d("OTAService", "文件读取成功");
             Utils.setStringSharedPreference(OTAService.this, Constants.PREF_BOOTLOADER_STATE, "56");
             CommonParams.mFileupgradeStarted = true;
             otaFirmwareWrite.OTAEnterBootLoaderCmd(mCheckSumType);
-            Log.d("BLEService", "执行进入bootloader方法");
+            Log.d("OTAService", "执行进入bootloader方法");
         }
     }
 }
