@@ -23,6 +23,8 @@ public class CommonParams {
     public final static String CHARACUUID="CHARACUUID";
     // RSSI指令
     public final static String RSSI="RSSI";
+    // 断开连接指令
+    public final static String DISCONN="DISCONN";
     // 字节标志
     public final static String BYTECODE="BYTECODE";
 }

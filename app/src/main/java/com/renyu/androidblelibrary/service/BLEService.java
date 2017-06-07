@@ -126,6 +126,9 @@ public class BLEService extends Service {
             if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.RSSI)) {
                 bleFramework.readRSSI();
             }
+            if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.DISCONN)) {
+                bleFramework.disconnect();
+            }
         }
         return super.onStartCommand(intent, flags, startId);
     }
@@ -171,6 +174,16 @@ public class BLEService extends Service {
         Intent intent=new Intent(context, BLEService.class);
         intent.putExtra(CommonParams.COMMAND, CommonParams.CONN);
         intent.putExtra(CommonParams.DEVICE, bluetoothDevice);
+        context.startService(intent);
+    }
+
+    /**
+     * 断开连接
+     * @param context
+     */
+    public static void disconn(Context context) {
+        Intent intent=new Intent(context, BLEService.class);
+        intent.putExtra(CommonParams.COMMAND, CommonParams.DISCONN);
         context.startService(intent);
     }
 

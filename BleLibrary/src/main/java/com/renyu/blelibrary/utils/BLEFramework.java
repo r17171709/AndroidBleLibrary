@@ -62,6 +62,8 @@ public class BLEFramework {
     public static final int STATE_SERVICES_DISCOVERED = 5;
     // 设备配置OTA服务成功
     public static final int STATE_SERVICES_OTA_DISCOVERED = 6;
+    // 当前设备状态
+    private int connectionState=STATE_DISCONNECTED;
 
     // 搜索到的设备
     private HashMap<String, BLEDevice> tempsDevices;
@@ -354,9 +356,18 @@ public class BLEFramework {
      * @param state
      */
     private void setConnectionState(int state) {
+        connectionState=state;
         if (bleStateChangeListener!=null) {
             bleStateChangeListener.getCurrentState(state);
         }
+    }
+
+    /**
+     * 获取设备当前状态
+     * @return
+     */
+    public int getConnectionState() {
+        return connectionState;
     }
 
     /**
