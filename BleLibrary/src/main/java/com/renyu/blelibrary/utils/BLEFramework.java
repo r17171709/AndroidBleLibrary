@@ -22,8 +22,9 @@ import com.cypress.cysmart.Params.CommonParams;
 import com.renyu.blelibrary.bean.BLEDevice;
 import com.renyu.blelibrary.impl.BLEConnectListener;
 import com.renyu.blelibrary.impl.BLEOTAListener;
-import com.renyu.blelibrary.impl.BLEResponseListener;
+import com.renyu.blelibrary.impl.BLEReadResponseListener;
 import com.renyu.blelibrary.impl.BLEStateChangeListener;
+import com.renyu.blelibrary.impl.BLEWriteResponseListener;
 
 import java.util.HashMap;
 import java.util.List;
@@ -92,9 +93,11 @@ public class BLEFramework {
     // BLE当前状态
     private BLEStateChangeListener bleStateChangeListener;
     // BLE返回值回调
-    private BLEResponseListener bleResponseListener;
+    private BLEWriteResponseListener bleWriteResponseListener;
     // OTA进度回调
     private BLEOTAListener bleotaListener;
+    // BLE读命令回调
+    private BLEReadResponseListener bleReadResponseListener;
 
     public static BLEFramework getBleFrameworkInstance() {
         if (bleFramework==null) {
@@ -213,6 +216,13 @@ public class BLEFramework {
             public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 super.onCharacteristicRead(gatt, characteristic, status);
                 BLEFramework.this.gatt=gatt;
+                if (status==BluetoothGatt.GATT_SUCCESS) {
+                    requestQueue.release();
+                }
+
+                if (bleReadResponseListener!=null) {
+                    bleReadResponseListener.getResponseValues(characteristic.getUuid(), characteristic.getValue());
+                }
             }
 
             @Override
@@ -253,8 +263,8 @@ public class BLEFramework {
                     BLEFramework.this.context.sendBroadcast(intentOTA);
                 }
                 else {
-                    if (bleResponseListener!=null) {
-                        bleResponseListener.getResponseValues(characteristic.getValue());
+                    if (bleWriteResponseListener!=null) {
+                        bleWriteResponseListener.getResponseValues(characteristic.getValue());
                     }
                 }
             }
@@ -397,11 +407,20 @@ public class BLEFramework {
     }
 
     /**
-     * 发送指令
+     * 发送写命令队列
      * @param sendValue
      */
-    public void addCommand(byte[] sendValue) {
-        requestQueue.add(sendValue);
+    public void addWriteCommand(byte[] sendValue) {
+        requestQueue.addWriteCommand(sendValue);
+    }
+
+    /**
+     * 发送读命令队列
+     * @param serviceUUID
+     * @param CharacUUID
+     */
+    public void addReadCommand(final UUID serviceUUID, final UUID CharacUUID) {
+        requestQueue.addReadCommand(serviceUUID, CharacUUID);
     }
 
     /**
@@ -484,10 +503,10 @@ public class BLEFramework {
 
     /**
      * 设置BLE返回值回调
-     * @param bleResponseListener
+     * @param bleWriteResponseListener
      */
-    public void setBleResponseListener(BLEResponseListener bleResponseListener) {
-        this.bleResponseListener = bleResponseListener;
+    public void setBLEWriteResponseListener(BLEWriteResponseListener bleWriteResponseListener) {
+        this.bleWriteResponseListener = bleWriteResponseListener;
     }
 
     /**
@@ -496,6 +515,14 @@ public class BLEFramework {
      */
     public void setBleotaListener(BLEOTAListener bleotaListener) {
         this.bleotaListener = bleotaListener;
+    }
+
+    /**
+     * 设置BLE读命令回调
+     * @param bleReadResponseListener
+     */
+    public void setBleReadResponseListener(BLEReadResponseListener bleReadResponseListener) {
+        this.bleReadResponseListener = bleReadResponseListener;
     }
 
     /**

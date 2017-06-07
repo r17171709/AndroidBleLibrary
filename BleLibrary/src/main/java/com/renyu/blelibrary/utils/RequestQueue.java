@@ -5,6 +5,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -78,10 +79,10 @@ public class RequestQueue {
     }
 
     /**
-     * 加入队列
+     * 加入写命令队列
      * @param bytes
      */
-    public void add(final byte[] bytes) {
+    public void addWriteCommand(final byte[] bytes) {
         Runnable runnable=new Runnable() {
             @Override
             public void run() {
@@ -113,6 +114,46 @@ public class RequestQueue {
                     }
                 });
                 bleFramework.writeCharacteristic(bytes);
+            }
+        };
+        Message message=new Message();
+        message.what=0x111;
+        message.obj=runnable;
+        looperHandler.sendMessage(message);
+    }
+
+    public void addReadCommand(final UUID serviceUUID, final UUID CharacUUID) {
+        Runnable runnable=new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    semaphore.acquire();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Log.d("RequestQueue", "添加");
+                Observable.timer(5, TimeUnit.SECONDS).subscribe(new Observer<Long>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        delayDisposable = d;
+                    }
+
+                    @Override
+                    public void onNext(Long value) {
+                        release();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+                bleFramework.readCharacteristic(serviceUUID, CharacUUID);
             }
         };
         Message message=new Message();

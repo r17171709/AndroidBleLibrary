@@ -15,6 +15,12 @@ public class CommonParams {
     public final static String DEVICE="DEVICE";
     // 写命令
     public final static String WRITE="WRITE";
+    // 读命令
+    public final static String READ="READ";
+    // 读命令服务UUID
+    public final static String SERVICEUUID="SERVICEUUID";
+    // 读命令特征UUID
+    public final static String CHARACUUID="CHARACUUID";
     // 字节标志
     public final static String BYTECODE="BYTECODE";
 }

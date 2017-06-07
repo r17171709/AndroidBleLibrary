@@ -16,9 +16,15 @@
         android:layout_margin="10dip"
         android:text="连接手环"  />
     <Button
-        android:id="@+id/btn_command"
+        android:id="@+id/btn_write"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="10dip"
-        android:text="测试指令"  />
+        android:text="写指令"  />
+    <Button
+        android:id="@+id/btn_read"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dip"
+        android:text="读指令"  />
 </LinearLayout>
