@@ -30,7 +30,7 @@ public class RequestQueue {
     // 循环队列
     private Thread looperThread;
     private Handler looperHandler;
-    // 超时继续发射
+    // 超时释放信号量
     private Disposable delayDisposable;
 
     private RequestQueue(BLEFramework bleFramework) {
@@ -122,6 +122,11 @@ public class RequestQueue {
         looperHandler.sendMessage(message);
     }
 
+    /**
+     * 加入读命令队列
+     * @param serviceUUID
+     * @param CharacUUID
+     */
     public void addReadCommand(final UUID serviceUUID, final UUID CharacUUID) {
         Runnable runnable=new Runnable() {
             @Override
