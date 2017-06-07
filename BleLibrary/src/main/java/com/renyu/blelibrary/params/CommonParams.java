@@ -13,14 +13,16 @@ public class CommonParams {
     public final static String CONN="CONN";
     // 设备标志
     public final static String DEVICE="DEVICE";
-    // 写命令
+    // 写指令
     public final static String WRITE="WRITE";
-    // 读命令
+    // 读指令
     public final static String READ="READ";
-    // 读命令服务UUID
+    // 读指令服务UUID
     public final static String SERVICEUUID="SERVICEUUID";
-    // 读命令特征UUID
+    // 读指令特征UUID
     public final static String CHARACUUID="CHARACUUID";
+    // RSSI指令
+    public final static String RSSI="RSSI";
     // 字节标志
     public final static String BYTECODE="BYTECODE";
 }

@@ -73,6 +73,14 @@ public class MainActivity extends AppCompatActivity {
                 BLEService.sendReadCommand(Params.UUID_SERVICE_BATTERY, Params.UUID_SERVICE_BATTERY_READ, MainActivity.this);
             }
         });
+
+        Button btn_rssi= (Button) findViewById(R.id.btn_rssi);
+        btn_rssi.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                BLEService.readRSSI(MainActivity.this);
+            }
+        });
     }
 
     @Override

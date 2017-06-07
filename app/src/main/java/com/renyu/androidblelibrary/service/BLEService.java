@@ -13,6 +13,7 @@ import com.renyu.androidblelibrary.params.Params;
 import com.renyu.blelibrary.bean.BLEDevice;
 import com.renyu.blelibrary.impl.BLEConnectListener;
 import com.renyu.blelibrary.impl.BLEOTAListener;
+import com.renyu.blelibrary.impl.BLERSSIListener;
 import com.renyu.blelibrary.impl.BLEReadResponseListener;
 import com.renyu.blelibrary.impl.BLEStateChangeListener;
 import com.renyu.blelibrary.impl.BLEWriteResponseListener;
@@ -86,6 +87,12 @@ public class BLEService extends Service {
                 putReadCommand(CharacUUID, value);
             }
         });
+        bleFramework.setBlerssiListener(new BLERSSIListener() {
+            @Override
+            public void getRssi(int rssi) {
+                Log.d("BLEService", "rssi:" + rssi);
+            }
+        });
         bleFramework.setBleotaListener(new BLEOTAListener() {
             @Override
             public void showProgress(int progress) {
@@ -115,6 +122,9 @@ public class BLEService extends Service {
             }
             if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.READ)) {
                 bleFramework.addReadCommand((UUID) intent.getSerializableExtra(CommonParams.SERVICEUUID), (UUID) intent.getSerializableExtra(CommonParams.CHARACUUID));
+            }
+            if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.RSSI)) {
+                bleFramework.readRSSI();
             }
         }
         return super.onStartCommand(intent, flags, startId);
@@ -174,7 +184,15 @@ public class BLEService extends Service {
         context.startService(intent);
     }
 
-
+    /**
+     * 读取RSSI
+     * @param context
+     */
+    public static void readRSSI(Context context) {
+        Intent intent=new Intent(context, BLEService.class);
+        intent.putExtra(CommonParams.COMMAND, CommonParams.RSSI);
+        context.startService(intent);
+    }
 
     /**
      * 指令封装

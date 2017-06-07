@@ -22,6 +22,7 @@ import com.cypress.cysmart.Params.CommonParams;
 import com.renyu.blelibrary.bean.BLEDevice;
 import com.renyu.blelibrary.impl.BLEConnectListener;
 import com.renyu.blelibrary.impl.BLEOTAListener;
+import com.renyu.blelibrary.impl.BLERSSIListener;
 import com.renyu.blelibrary.impl.BLEReadResponseListener;
 import com.renyu.blelibrary.impl.BLEStateChangeListener;
 import com.renyu.blelibrary.impl.BLEWriteResponseListener;
@@ -96,6 +97,8 @@ public class BLEFramework {
     private BLEOTAListener bleotaListener;
     // BLE读命令回调
     private BLEReadResponseListener bleReadResponseListener;
+    // RSSI回调
+    private BLERSSIListener blerssiListener;
 
     public static BLEFramework getBleFrameworkInstance() {
         if (bleFramework==null) {
@@ -271,6 +274,10 @@ public class BLEFramework {
             public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
                 super.onReadRemoteRssi(gatt, rssi, status);
                 BLEFramework.this.gatt=gatt;
+
+                if (blerssiListener!=null) {
+                    blerssiListener.getRssi(rssi);
+                }
             }
         };
     }
@@ -421,6 +428,13 @@ public class BLEFramework {
     }
 
     /**
+     * 读取RSSI
+     */
+    public void readRSSI() {
+        gatt.readRemoteRssi();
+    }
+
+    /**
      * 检查是否进入OTA模式
      */
     public boolean checkIsOTA() {
@@ -520,6 +534,10 @@ public class BLEFramework {
      */
     public void setBleReadResponseListener(BLEReadResponseListener bleReadResponseListener) {
         this.bleReadResponseListener = bleReadResponseListener;
+    }
+
+    public void setBlerssiListener(BLERSSIListener blerssiListener) {
+        this.blerssiListener = blerssiListener;
     }
 
     /**
