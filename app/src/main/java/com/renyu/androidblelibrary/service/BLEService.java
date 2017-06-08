@@ -117,6 +117,9 @@ public class BLEService extends Service {
             if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.CONN)) {
                 bleFramework.startConn((BluetoothDevice) intent.getParcelableExtra(CommonParams.DEVICE));
             }
+            if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.SCANCONN)) {
+                bleFramework.startScanAndConn(intent.getStringExtra(CommonParams.DEVICE));
+            }
             if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.WRITE)) {
                 bleFramework.addWriteCommand(intent.getByteArrayExtra(CommonParams.BYTECODE));
             }
@@ -194,6 +197,17 @@ public class BLEService extends Service {
     public static void scan(Context context) {
         Intent intent=new Intent(context, BLEService.class);
         intent.putExtra(CommonParams.COMMAND, CommonParams.SCAN);
+        context.startService(intent);
+    }
+
+    /**
+     * 扫描并连接指定设备
+     * @param context
+     */
+    public static void scanAndConn(Context context, String deviceName) {
+        Intent intent=new Intent(context, BLEService.class);
+        intent.putExtra(CommonParams.COMMAND, CommonParams.SCANCONN);
+        intent.putExtra(CommonParams.DEVICE, deviceName);
         context.startService(intent);
     }
 

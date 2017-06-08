@@ -11,6 +11,8 @@ public class CommonParams {
     public final static String SCAN="SCAN";
     // 连接指令
     public final static String CONN="CONN";
+    // 扫描并连接指令
+    public final static String SCANCONN="SCANCONN";
     // 设备标志
     public final static String DEVICE="DEVICE";
     // 写指令

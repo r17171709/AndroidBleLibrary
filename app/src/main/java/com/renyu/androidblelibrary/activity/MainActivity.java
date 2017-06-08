@@ -38,7 +38,8 @@ public class MainActivity extends AppCompatActivity {
         btn_scan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                BLEService.scan(MainActivity.this);
+//                BLEService.scan(MainActivity.this);
+                BLEService.scanAndConn(MainActivity.this, "iite-j6J7Nj");
             }
         });
 
