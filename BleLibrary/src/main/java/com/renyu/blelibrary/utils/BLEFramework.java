@@ -148,20 +148,7 @@ public class BLEFramework {
         BluetoothManager manager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
         adapter= manager.getAdapter();
         handlerScan=new Handler(Looper.getMainLooper());
-        // BLE扫描回调
-        leScanCallback=new BLEScanCallBack("") {
-            @Override
-            public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-                if (device!=null && !tempsDevices.containsKey(device.getAddress())) {
-                    BLEDevice device1=new BLEDevice();
-                    device1.setRssi(rssi);
-                    device1.setDevice(device);
-                    device1.setScanRecord(scanRecord);
-                    tempsDevices.put(device.getAddress(), device1);
-                    bleConnectListener.getAllScanDevice(device1);
-                }
-            }
-        };
+
         // GATT回调
         bleGattCallback=new BluetoothGattCallback() {
             @Override
@@ -314,6 +301,20 @@ public class BLEFramework {
      * @return
      */
     public void startScan() {
+        // BLE扫描回调
+        leScanCallback=new BLEScanCallBack("") {
+            @Override
+            public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                if (device!=null && !tempsDevices.containsKey(device.getAddress())) {
+                    BLEDevice device1=new BLEDevice();
+                    device1.setRssi(rssi);
+                    device1.setDevice(device);
+                    device1.setScanRecord(scanRecord);
+                    tempsDevices.put(device.getAddress(), device1);
+                    bleConnectListener.getAllScanDevice(device1);
+                }
+            }
+        };
         boolean success=adapter.startLeScan(leScanCallback);
         if (success) {
             // 开始搜索
@@ -335,6 +336,7 @@ public class BLEFramework {
      * @param deviceName
      */
     public void startScanAndConn(final String deviceName) {
+        // BLE扫描回调
         leScanCallback=new BLEScanCallBack(deviceName) {
             @Override
             public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
