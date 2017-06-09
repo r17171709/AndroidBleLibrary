@@ -321,7 +321,7 @@ public class BLEFramework {
             handlerScan.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    stopScan();
+                    stopScan(false);
                 }
             }, timeSeconds);
         }
@@ -344,7 +344,7 @@ public class BLEFramework {
                     device1.setDevice(device);
                     device1.setScanRecord(scanRecord);
                     bleConnectListener.getAllScanDevice(device1);
-                    stopScan();
+                    stopScan(false);
                     startConn(device);
                 }
             }
@@ -356,7 +356,7 @@ public class BLEFramework {
             handlerScan.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    stopScan();
+                    stopScan(true);
                 }
             }, timeSeconds);
         }
@@ -368,11 +368,17 @@ public class BLEFramework {
     /**
      * 结束扫描
      */
-    public void stopScan() {
+    public void stopScan(boolean scanConnFail) {
         handlerScan.removeCallbacksAndMessages(null);
         adapter.stopLeScan(leScanCallback);
-        // 搜索完毕
-        setConnectionState(STATE_SCANNED);
+        if (scanConnFail) {
+            // 扫描连接失败
+            setConnectionState(STATE_DISCONNECTED);
+        }
+        else {
+            // 搜索完毕
+            setConnectionState(STATE_SCANNED);
+        }
         tempsDevices.clear();
     }
 
