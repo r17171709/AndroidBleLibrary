@@ -6,9 +6,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.renyu.androidblelibrary.bean.BLECommandModel;
+import com.renyu.androidblelibrary.bean.BLEConnectModel;
 import com.renyu.androidblelibrary.params.Params;
 import com.renyu.blelibrary.bean.BLEDevice;
 import com.renyu.blelibrary.impl.BLEConnectListener;
@@ -64,7 +66,7 @@ public class BLEService extends Service {
             @Override
             public void getAllScanDevice(BLEDevice bleDevice) {
                 Log.d("BLEService", bleDevice.getDevice().getName() + " " + bleDevice.getDevice().getAddress());
-                if (bleDevice.getDevice().getName()!=null && bleDevice.getDevice().getName().startsWith("iite")) {
+                if (!TextUtils.isEmpty(bleDevice.getDevice().getName()) && bleDevice.getDevice().getName().startsWith("iite-")) {
                     EventBus.getDefault().post(bleDevice);
                 }
             }
@@ -73,6 +75,10 @@ public class BLEService extends Service {
             @Override
             public void getCurrentState(int currentState) {
                 Log.d("BLEService", "currentState:" + currentState);
+
+                BLEConnectModel model=new BLEConnectModel();
+                model.setBleState(currentState);
+                EventBus.getDefault().post(model);
             }
         });
         bleFramework.setBLEWriteResponseListener(new BLEWriteResponseListener() {
@@ -117,6 +123,7 @@ public class BLEService extends Service {
             if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.CONN)) {
                 bleFramework.startConn((BluetoothDevice) intent.getParcelableExtra(CommonParams.DEVICE));
             }
+            // 家iite-j6J7Nj  公司iite-N3Uf2e
             if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.SCANCONN)) {
                 bleFramework.startScanAndConn(intent.getStringExtra(CommonParams.DEVICE));
             }
@@ -130,6 +137,7 @@ public class BLEService extends Service {
                 bleFramework.readRSSI();
             }
             if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.DISCONN)) {
+                bleFramework.stopScan(true);
                 bleFramework.disconnect();
             }
         }
@@ -219,6 +227,16 @@ public class BLEService extends Service {
         Intent intent=new Intent(context, BLEService.class);
         intent.putExtra(CommonParams.COMMAND, CommonParams.RSSI);
         context.startService(intent);
+    }
+
+    /**
+     * 获取设备连接状态
+     * @return
+     */
+    public static BLEConnectModel getBLEConnectModel() {
+        BLEConnectModel bleConnectModel=new BLEConnectModel();
+        bleConnectModel.setBleState(BLEFramework.getBleFrameworkInstance().getConnectionState());
+        return bleConnectModel;
     }
 
     /**
@@ -406,5 +424,11 @@ public class BLEService extends Service {
             model.setValue(new String(bytes));
         }
         EventBus.getDefault().post(model);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        bleFramework.disconnect();
     }
 }

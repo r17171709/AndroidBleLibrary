@@ -9,11 +9,16 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanFilter;
+import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.cypress.cysmart.CommonUtils.Constants;
@@ -24,10 +29,13 @@ import com.renyu.blelibrary.impl.BLEConnectListener;
 import com.renyu.blelibrary.impl.BLEOTAListener;
 import com.renyu.blelibrary.impl.BLERSSIListener;
 import com.renyu.blelibrary.impl.BLEReadResponseListener;
+import com.renyu.blelibrary.impl.BLEScan21CallBack;
 import com.renyu.blelibrary.impl.BLEScanCallBack;
 import com.renyu.blelibrary.impl.BLEStateChangeListener;
 import com.renyu.blelibrary.impl.BLEWriteResponseListener;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -79,6 +87,7 @@ public class BLEFramework {
     private Context context;
     private BluetoothAdapter adapter;
     private BLEScanCallBack leScanCallback;
+    private BLEScan21CallBack bleScan21CallBack;
     private BluetoothGattCallback bleGattCallback;
     // 当前连接的gatt对象
     private BluetoothGatt gatt;
@@ -291,7 +300,7 @@ public class BLEFramework {
     /**
      * 断开BLE连接
      */
-    public void disconnect() {
+    public synchronized void disconnect() {
         if (gatt!=null)
             gatt.disconnect();
     }
@@ -300,59 +309,24 @@ public class BLEFramework {
      * 开始扫描
      * @return
      */
-    public void startScan() {
+    public synchronized void startScan() {
         // BLE扫描回调
-        leScanCallback=new BLEScanCallBack("") {
-            @Override
-            public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-                if (device!=null && !tempsDevices.containsKey(device.getAddress())) {
-                    BLEDevice device1=new BLEDevice();
-                    device1.setRssi(rssi);
-                    device1.setDevice(device);
-                    device1.setScanRecord(scanRecord);
-                    tempsDevices.put(device.getAddress(), device1);
-                    bleConnectListener.getAllScanDevice(device1);
-                }
-            }
-        };
-        boolean success=adapter.startLeScan(leScanCallback);
-        if (success) {
-            // 开始搜索
-            setConnectionState(STATE_SCANNING);
-            handlerScan.postDelayed(new Runnable() {
+        if (Build.VERSION_CODES.LOLLIPOP <= Build.VERSION.SDK_INT) {
+            bleScan21CallBack=new BLEScan21CallBack("") {
                 @Override
-                public void run() {
-                    stopScan(false);
+                public void onScanResult(int callbackType, ScanResult result) {
+                    super.onScanResult(callbackType, result);
+                    if (result !=null && result.getDevice()!=null && !tempsDevices.containsKey(result.getDevice().getAddress())) {
+                        BLEDevice device1=new BLEDevice();
+                        device1.setRssi(result.getRssi());
+                        device1.setDevice(result.getDevice());
+                        device1.setScanRecord(result.getScanRecord().getBytes());
+                        tempsDevices.put(result.getDevice().getAddress(), device1);
+                        bleConnectListener.getAllScanDevice(device1);
+                    }
                 }
-            }, timeSeconds);
-        }
-        else {
-            setConnectionState(STATE_DISCONNECTED);
-        }
-    }
-
-    /**
-     * 扫描完成直接连接
-     * @param deviceName
-     */
-    public void startScanAndConn(final String deviceName) {
-        // BLE扫描回调
-        leScanCallback=new BLEScanCallBack(deviceName) {
-            @Override
-            public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-                if (device!=null && device.getName()!=null && deviceName.equals(device.getName())) {
-                    BLEDevice device1=new BLEDevice();
-                    device1.setRssi(rssi);
-                    device1.setDevice(device);
-                    device1.setScanRecord(scanRecord);
-                    bleConnectListener.getAllScanDevice(device1);
-                    stopScan(false);
-                    startConn(device);
-                }
-            }
-        };
-        boolean success=adapter.startLeScan(leScanCallback);
-        if (success) {
+            };
+            adapter.getBluetoothLeScanner().startScan(bleScan21CallBack);
             // 开始搜索
             setConnectionState(STATE_SCANNING);
             handlerScan.postDelayed(new Runnable() {
@@ -363,16 +337,111 @@ public class BLEFramework {
             }, timeSeconds);
         }
         else {
-            setConnectionState(STATE_DISCONNECTED);
+            leScanCallback=new BLEScanCallBack("") {
+                @Override
+                public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                    if (device!=null && !tempsDevices.containsKey(device.getAddress())) {
+                        BLEDevice device1=new BLEDevice();
+                        device1.setRssi(rssi);
+                        device1.setDevice(device);
+                        device1.setScanRecord(scanRecord);
+                        tempsDevices.put(device.getAddress(), device1);
+                        bleConnectListener.getAllScanDevice(device1);
+                    }
+                }
+            };
+            boolean success=adapter.startLeScan(leScanCallback);
+            if (success) {
+                // 开始搜索
+                setConnectionState(STATE_SCANNING);
+                handlerScan.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopScan(false);
+                    }
+                }, timeSeconds);
+            }
+            else {
+                setConnectionState(STATE_DISCONNECTED);
+            }
+        }
+    }
+
+    /**
+     * 扫描完成直接连接
+     * @param deviceName
+     */
+    public synchronized void startScanAndConn(final String deviceName) {
+        // BLE扫描回调
+        if (Build.VERSION_CODES.LOLLIPOP <= Build.VERSION.SDK_INT) {
+            bleScan21CallBack=new BLEScan21CallBack(deviceName) {
+                @Override
+                public void onScanResult(int callbackType, ScanResult result) {
+                    super.onScanResult(callbackType, result);
+                    if (result !=null && result.getDevice()!=null && !TextUtils.isEmpty(result.getDevice().getName()) && result.getDevice().getName().equals(deviceName)) {
+                        BLEDevice device1=new BLEDevice();
+                        device1.setRssi(result.getRssi());
+                        device1.setDevice(result.getDevice());
+                        device1.setScanRecord(result.getScanRecord().getBytes());
+                        bleConnectListener.getAllScanDevice(device1);
+                        stopScan(false);
+                        startConn(result.getDevice());
+                    }
+                }
+            };
+            adapter.getBluetoothLeScanner().startScan(bleScan21CallBack);
+            // 开始搜索
+            setConnectionState(STATE_SCANNING);
+            handlerScan.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    stopScan(true);
+                }
+            }, timeSeconds);
+        }
+        else {
+            leScanCallback=new BLEScanCallBack(deviceName) {
+                @Override
+                public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+                    if (device!=null && !TextUtils.isEmpty(device.getName()) && deviceName.equals(device.getName())) {
+                        BLEDevice device1=new BLEDevice();
+                        device1.setRssi(rssi);
+                        device1.setDevice(device);
+                        device1.setScanRecord(scanRecord);
+                        bleConnectListener.getAllScanDevice(device1);
+                        stopScan(false);
+                        startConn(device);
+                    }
+                }
+            };
+            boolean success=adapter.startLeScan(leScanCallback);
+            if (success) {
+                // 开始搜索
+                setConnectionState(STATE_SCANNING);
+                handlerScan.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        stopScan(true);
+                    }
+                }, timeSeconds);
+            }
+            else {
+                setConnectionState(STATE_DISCONNECTED);
+            }
         }
     }
 
     /**
      * 结束扫描
      */
-    public void stopScan(boolean scanConnFail) {
+    public synchronized void stopScan(boolean scanConnFail) {
         handlerScan.removeCallbacksAndMessages(null);
-        adapter.stopLeScan(leScanCallback);
+        if (Build.VERSION_CODES.LOLLIPOP <= Build.VERSION.SDK_INT) {
+            adapter.getBluetoothLeScanner().stopScan(bleScan21CallBack);
+        }
+        else {
+            adapter.stopLeScan(leScanCallback);
+        }
         if (scanConnFail) {
             // 扫描连接失败
             setConnectionState(STATE_DISCONNECTED);
@@ -388,7 +457,7 @@ public class BLEFramework {
      * 开始连接
      * @param device
      */
-    public void startConn(BluetoothDevice device) {
+    public synchronized void startConn(BluetoothDevice device) {
         currentDevice = device;
         // 开始连接
         setConnectionState(STATE_CONNECTING);
@@ -601,5 +670,18 @@ public class BLEFramework {
      */
     public void setTimeSeconds(int timeSeconds) {
         this.timeSeconds=timeSeconds;
+    }
+
+    public synchronized boolean refreshDeviceCache() {
+        try {
+            final Method refresh = BluetoothGatt.class.getMethod("refresh");
+            if (refresh != null && gatt != null) {
+                final boolean success = (Boolean) refresh.invoke(gatt);
+                return success;
+            }
+        } catch (Exception e) {
+
+        }
+        return false;
     }
 }
