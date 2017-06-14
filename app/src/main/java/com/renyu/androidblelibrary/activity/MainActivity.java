@@ -1,5 +1,6 @@
 package com.renyu.androidblelibrary.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -38,7 +39,8 @@ public class MainActivity extends AppCompatActivity {
         btn_scan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                BLEService.scan(MainActivity.this);
+//                BLEService.scan(MainActivity.this);
+                BLEService.scanAndConn(MainActivity.this, "iite-N3Uf2e");
             }
         });
 
@@ -88,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
 
         EventBus.getDefault().unregister(this);
+        stopService(new Intent(MainActivity.this, BLEService.class));
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)

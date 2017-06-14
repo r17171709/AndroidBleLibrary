@@ -9,8 +9,6 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
@@ -35,10 +33,15 @@ import com.renyu.blelibrary.impl.BLEStateChangeListener;
 import com.renyu.blelibrary.impl.BLEWriteResponseListener;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by renyu on 2017/1/12.
@@ -77,7 +80,7 @@ public class BLEFramework {
     // 搜索到的设备
     private HashMap<String, BLEDevice> tempsDevices;
     // 搜索所需时间
-    private int timeSeconds=5000;
+    private int timeSeconds=10000;
     // 搜索Handler
     private Handler handlerScan;
 
@@ -111,6 +114,10 @@ public class BLEFramework {
     private BLEReadResponseListener bleReadResponseListener;
     // RSSI回调
     private BLERSSIListener blerssiListener;
+
+    // app默认重连3次
+    // 发起重连次数
+    int retryCount=0;
 
     public static BLEFramework getBleFrameworkInstance() {
         if (bleFramework==null) {
@@ -177,7 +184,24 @@ public class BLEFramework {
                         BLEFramework.this.gatt=null;
                         BLEFramework.this.currentCharacteristic=null;
                         BLEFramework.this.currentDevice=null;
-                        setConnectionState(STATE_DISCONNECTED);
+                        // 连接不上的时候进行重连
+                        if (connectionState==STATE_CONNECTING && retryCount<3) {
+                            Log.d("BLEFramework", "重连重试");
+                            Observable.timer(1, TimeUnit.SECONDS)
+                                    .subscribeOn(Schedulers.io())
+                                    .observeOn(AndroidSchedulers.mainThread())
+                                    .subscribe(new Consumer<Long>() {
+                                        @Override
+                                        public void accept(Long aLong) throws Exception {
+                                            startConn(currentDevice);
+                                            retryCount++;
+                                        }
+                                    });
+                        }
+                        else {
+                            setConnectionState(STATE_DISCONNECTED);
+                            retryCount=0;
+                        }
                         break;
                 }
             }
@@ -193,6 +217,7 @@ public class BLEFramework {
                             if (enableNotification(characteristic, gatt, BLEFramework.this.UUID_OTADESCRIPTOR)) {
                                 currentCharacteristic = characteristic;
                                 setConnectionState(STATE_SERVICES_OTA_DISCOVERED);
+                                retryCount=0;
                                 return;
                             }
                         }
@@ -204,6 +229,7 @@ public class BLEFramework {
                                 // 连接通知服务完成
                                 currentCharacteristic = characteristic;
                                 setConnectionState(STATE_SERVICES_DISCOVERED);
+                                retryCount=0;
                                 return;
                             }
                         }
