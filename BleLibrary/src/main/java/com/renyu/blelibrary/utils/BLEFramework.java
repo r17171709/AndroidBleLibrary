@@ -358,7 +358,7 @@ public class BLEFramework {
             handlerScan.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    stopScan(true);
+                    stopScan(false);
                 }
             }, timeSeconds);
         }
