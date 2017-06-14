@@ -19,7 +19,6 @@ import com.renyu.blelibrary.impl.BLERSSIListener;
 import com.renyu.blelibrary.impl.BLEReadResponseListener;
 import com.renyu.blelibrary.impl.BLEStateChangeListener;
 import com.renyu.blelibrary.impl.BLEWriteResponseListener;
-import com.renyu.blelibrary.params.CommonParams;
 import com.renyu.blelibrary.utils.BLEFramework;
 
 import org.greenrobot.eventbus.EventBus;
@@ -116,27 +115,27 @@ public class BLEService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent!=null && intent.getStringExtra(CommonParams.COMMAND)!=null) {
-            if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.SCAN)) {
+        if (intent!=null && intent.getStringExtra(Params.COMMAND)!=null) {
+            if (intent.getStringExtra(Params.COMMAND).equals(Params.SCAN)) {
                 bleFramework.startScan();
             }
-            if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.CONN)) {
-                bleFramework.startConn((BluetoothDevice) intent.getParcelableExtra(CommonParams.DEVICE));
+            if (intent.getStringExtra(Params.COMMAND).equals(Params.CONN)) {
+                bleFramework.startConn((BluetoothDevice) intent.getParcelableExtra(Params.DEVICE));
             }
             // 家iite-j6J7Nj  公司iite-N3Uf2e
-            if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.SCANCONN)) {
-                bleFramework.startScanAndConn(intent.getStringExtra(CommonParams.DEVICE));
+            if (intent.getStringExtra(Params.COMMAND).equals(Params.SCANCONN)) {
+                bleFramework.startScanAndConn(intent.getStringExtra(Params.DEVICE));
             }
-            if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.WRITE)) {
-                bleFramework.addWriteCommand(intent.getByteArrayExtra(CommonParams.BYTECODE));
+            if (intent.getStringExtra(Params.COMMAND).equals(Params.WRITE)) {
+                bleFramework.addWriteCommand(intent.getByteArrayExtra(Params.BYTECODE));
             }
-            if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.READ)) {
-                bleFramework.addReadCommand((UUID) intent.getSerializableExtra(CommonParams.SERVICEUUID), (UUID) intent.getSerializableExtra(CommonParams.CHARACUUID));
+            if (intent.getStringExtra(Params.COMMAND).equals(Params.READ)) {
+                bleFramework.addReadCommand((UUID) intent.getSerializableExtra(Params.SERVICEUUID), (UUID) intent.getSerializableExtra(Params.CHARACUUID));
             }
-            if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.RSSI)) {
+            if (intent.getStringExtra(Params.COMMAND).equals(Params.RSSI)) {
                 bleFramework.readRSSI();
             }
-            if (intent.getStringExtra(CommonParams.COMMAND).equals(CommonParams.DISCONN)) {
+            if (intent.getStringExtra(Params.COMMAND).equals(Params.DISCONN)) {
                 bleFramework.stopScan(true);
                 bleFramework.disconnect();
             }
@@ -156,8 +155,8 @@ public class BLEService extends Service {
         byte[][] bytes_send = getDivided_data(values, command);
         for (byte[] bytes : bytes_send) {
             Intent intent=new Intent(context, BLEService.class);
-            intent.putExtra(CommonParams.COMMAND, CommonParams.WRITE);
-            intent.putExtra(CommonParams.BYTECODE, bytes);
+            intent.putExtra(Params.COMMAND, Params.WRITE);
+            intent.putExtra(Params.BYTECODE, bytes);
             context.startService(intent);
         }
     }
@@ -170,9 +169,9 @@ public class BLEService extends Service {
      */
     public static void sendReadCommand(final UUID serviceUUID, final UUID CharacUUID, Context context) {
         Intent intent=new Intent(context, BLEService.class);
-        intent.putExtra(CommonParams.COMMAND, CommonParams.READ);
-        intent.putExtra(CommonParams.SERVICEUUID, serviceUUID);
-        intent.putExtra(CommonParams.CHARACUUID, CharacUUID);
+        intent.putExtra(Params.COMMAND, Params.READ);
+        intent.putExtra(Params.SERVICEUUID, serviceUUID);
+        intent.putExtra(Params.CHARACUUID, CharacUUID);
         context.startService(intent);
     }
 
@@ -183,8 +182,8 @@ public class BLEService extends Service {
      */
     public static void conn(BluetoothDevice bluetoothDevice, Context context) {
         Intent intent=new Intent(context, BLEService.class);
-        intent.putExtra(CommonParams.COMMAND, CommonParams.CONN);
-        intent.putExtra(CommonParams.DEVICE, bluetoothDevice);
+        intent.putExtra(Params.COMMAND, Params.CONN);
+        intent.putExtra(Params.DEVICE, bluetoothDevice);
         context.startService(intent);
     }
 
@@ -194,7 +193,7 @@ public class BLEService extends Service {
      */
     public static void disconn(Context context) {
         Intent intent=new Intent(context, BLEService.class);
-        intent.putExtra(CommonParams.COMMAND, CommonParams.DISCONN);
+        intent.putExtra(Params.COMMAND, Params.DISCONN);
         context.startService(intent);
     }
 
@@ -204,7 +203,7 @@ public class BLEService extends Service {
      */
     public static void scan(Context context) {
         Intent intent=new Intent(context, BLEService.class);
-        intent.putExtra(CommonParams.COMMAND, CommonParams.SCAN);
+        intent.putExtra(Params.COMMAND, Params.SCAN);
         context.startService(intent);
     }
 
@@ -214,8 +213,8 @@ public class BLEService extends Service {
      */
     public static void scanAndConn(Context context, String deviceName) {
         Intent intent=new Intent(context, BLEService.class);
-        intent.putExtra(CommonParams.COMMAND, CommonParams.SCANCONN);
-        intent.putExtra(CommonParams.DEVICE, deviceName);
+        intent.putExtra(Params.COMMAND, Params.SCANCONN);
+        intent.putExtra(Params.DEVICE, deviceName);
         context.startService(intent);
     }
 
@@ -225,7 +224,7 @@ public class BLEService extends Service {
      */
     public static void readRSSI(Context context) {
         Intent intent=new Intent(context, BLEService.class);
-        intent.putExtra(CommonParams.COMMAND, CommonParams.RSSI);
+        intent.putExtra(Params.COMMAND, Params.RSSI);
         context.startService(intent);
     }
 
