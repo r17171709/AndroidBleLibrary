@@ -180,10 +180,6 @@ public class BLEFramework {
                         break;
                     // BLE断开连接
                     case BluetoothProfile.STATE_DISCONNECTED:
-                        gatt.close();
-                        BLEFramework.this.gatt=null;
-                        BLEFramework.this.currentCharacteristic=null;
-                        BLEFramework.this.currentDevice=null;
                         // 连接不上的时候进行重连
                         if (connectionState==STATE_CONNECTING && retryCount<3) {
                             Log.d("BLEFramework", "重连重试");
@@ -199,6 +195,11 @@ public class BLEFramework {
                                     });
                         }
                         else {
+                            gatt.close();
+                            BLEFramework.this.gatt=null;
+                            BLEFramework.this.currentCharacteristic=null;
+                            BLEFramework.this.currentDevice=null;
+
                             setConnectionState(STATE_DISCONNECTED);
                             retryCount=0;
                         }
@@ -463,10 +464,14 @@ public class BLEFramework {
     public synchronized void stopScan(boolean scanConnFail) {
         handlerScan.removeCallbacksAndMessages(null);
         if (Build.VERSION_CODES.LOLLIPOP <= Build.VERSION.SDK_INT) {
-            adapter.getBluetoothLeScanner().stopScan(bleScan21CallBack);
+            if (bleScan21CallBack!=null) {
+                adapter.getBluetoothLeScanner().stopScan(bleScan21CallBack);
+            }
         }
         else {
-            adapter.stopLeScan(leScanCallback);
+            if (leScanCallback!=null) {
+                adapter.stopLeScan(leScanCallback);
+            }
         }
         if (scanConnFail) {
             // 扫描连接失败
