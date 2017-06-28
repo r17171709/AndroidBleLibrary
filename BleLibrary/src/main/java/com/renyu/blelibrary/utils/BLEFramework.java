@@ -181,7 +181,7 @@ public class BLEFramework {
                     // BLE断开连接
                     case BluetoothProfile.STATE_DISCONNECTED:
                         // 连接不上的时候进行重连
-                        if (connectionState==STATE_CONNECTING && retryCount<3) {
+                        if (connectionState==STATE_CONNECTING && retryCount<3 && currentDevice!=null) {
                             Log.d("BLEFramework", "重连重试");
                             Observable.timer(1, TimeUnit.SECONDS)
                                     .subscribeOn(Schedulers.io())
@@ -464,12 +464,12 @@ public class BLEFramework {
     public synchronized void stopScan(boolean scanConnFail) {
         handlerScan.removeCallbacksAndMessages(null);
         if (Build.VERSION_CODES.LOLLIPOP <= Build.VERSION.SDK_INT) {
-            if (bleScan21CallBack!=null) {
+            if (bleScan21CallBack!=null && adapter.isEnabled() && adapter.getBluetoothLeScanner()!=null) {
                 adapter.getBluetoothLeScanner().stopScan(bleScan21CallBack);
             }
         }
         else {
-            if (leScanCallback!=null) {
+            if (leScanCallback!=null && adapter!=null) {
                 adapter.stopLeScan(leScanCallback);
             }
         }
