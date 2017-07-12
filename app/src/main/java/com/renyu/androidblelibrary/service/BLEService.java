@@ -65,7 +65,7 @@ public class BLEService extends Service {
             @Override
             public void getAllScanDevice(BLEDevice bleDevice) {
                 Log.d("BLEService", bleDevice.getDevice().getName() + " " + bleDevice.getDevice().getAddress());
-                if (!TextUtils.isEmpty(bleDevice.getDevice().getName()) && bleDevice.getDevice().getName().startsWith("iite-")) {
+                if (!TextUtils.isEmpty(bleDevice.getDevice().getName()) && bleDevice.getDevice().getName().startsWith("iite-brush123")) {
                     EventBus.getDefault().post(bleDevice);
                 }
             }
@@ -139,10 +139,12 @@ public class BLEService extends Service {
                 bleFramework.stopScan(true);
                 bleFramework.disconnect();
             }
+            if (intent.getStringExtra(Params.COMMAND).equals(Params.OTA)) {
+                bleFramework.startOTA(intent.getStringExtra("filePath"));
+            }
         }
         return super.onStartCommand(intent, flags, startId);
     }
-
 
     /**
      * 发送写指令
@@ -225,6 +227,18 @@ public class BLEService extends Service {
     public static void readRSSI(Context context) {
         Intent intent=new Intent(context, BLEService.class);
         intent.putExtra(Params.COMMAND, Params.RSSI);
+        context.startService(intent);
+    }
+
+    /**
+     * ota升级
+     * @param context
+     * @param filePath
+     */
+    public static void ota(Context context, String filePath) {
+        Intent intent=new Intent(context, BLEService.class);
+        intent.putExtra(Params.COMMAND, Params.OTA);
+        intent.putExtra("filePath", filePath);
         context.startService(intent);
     }
 

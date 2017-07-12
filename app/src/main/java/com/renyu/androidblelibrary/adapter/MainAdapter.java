@@ -1,6 +1,7 @@
 package com.renyu.androidblelibrary.adapter;
 
 import android.content.Context;
+import android.os.Environment;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -103,6 +104,12 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
                 }
                 if (position==15) {
                     BLEService.sendWriteCommand(Params.BLE_COMMAND_GETUID, null, context);
+                }
+                if (position==16) {
+                    BLEService.sendWriteCommand(Params.BLE_COMMAND_UPDATE, null, context);
+                }
+                if (position==17) {
+                    BLEService.ota(context, Environment.getExternalStorageDirectory().getPath()+"/smartbrush/file/BLE_OTA_Bootloadable.cyacd");
                 }
             }
         });

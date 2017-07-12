@@ -18,6 +18,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.cypress.cysmart.CommonUtils.Constants;
 import com.cypress.cysmart.OTAFirmwareUpdate.OTAService;
@@ -605,9 +606,10 @@ public class BLEFramework {
     /**
      * 开启OTA升级
      */
-    public void startOTA() {
+    public void startOTA(String filepath) {
         Intent intent=new Intent(context, OTAService.class);
         intent.putExtra("command", 1);
+        intent.putExtra("filepath", filepath);
         context.startService(intent);
     }
 
@@ -647,6 +649,15 @@ public class BLEFramework {
 
     public void updateOTAProgress(int progress) {
         if (bleotaListener!=null) {
+            if (progress==-1) {
+                Toast.makeText(context, "升级失败", Toast.LENGTH_SHORT).show();
+            }
+            else if (progress==101) {
+                Toast.makeText(context, "升级成功", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                Toast.makeText(context, "升级完成"+progress+"%", Toast.LENGTH_SHORT).show();
+            }
             bleotaListener.showProgress(progress);
         }
     }

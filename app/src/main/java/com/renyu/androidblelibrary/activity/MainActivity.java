@@ -57,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
         models.add("清空所有刷牙信息");
         models.add("通知当前app刷牙方位");
         models.add("获取uniqueid");
+        models.add("进入固件升级");
+        models.add("开始固件升级");
 
         EventBus.getDefault().register(this);
 

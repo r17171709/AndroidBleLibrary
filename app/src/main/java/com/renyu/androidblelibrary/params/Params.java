@@ -64,6 +64,8 @@ public class Params {
     public static final int BLE_COMMAND_SENDTEETHPOSTION=186;
     //获取uniqueid
     public static final int BLE_COMMAND_GETUID=197;
+    //进入固件升级模式 172
+    public static final int BLE_COMMAND_UPDATE=172;
 
     public final static String COMMAND="command";
     // 扫描指令
@@ -88,4 +90,6 @@ public class Params {
     public final static String DISCONN="DISCONN";
     // 字节标志
     public final static String BYTECODE="BYTECODE";
+    // 进入OTA
+    public final static String OTA="OTA";
 }

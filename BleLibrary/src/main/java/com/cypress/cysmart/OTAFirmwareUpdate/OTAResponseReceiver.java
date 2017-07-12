@@ -29,21 +29,21 @@ public class OTAResponseReceiver extends BroadcastReceiver {
     private static final int CASE_SUCCESS = 0;
     private static final int CHECKSUM_END = 6;
     private static final int CHECKSUM_START = 4;
-    private static final String CYRET_ABORT = "CYRET_ABORT";
-    private static final String CYRET_BTLDR = "CYRET_BTLDR";
-    private static final String CYRET_ERR_ACTIVE = "CYRET_ERR_ACTIVE";
-    private static final String CYRET_ERR_APP = "CYRET_ERR_APP";
-    private static final String CYRET_ERR_ARRAY = "CYRET_ERR_ARRAY";
-    private static final String CYRET_ERR_CHECKSUM = "CYRET_ERR_CHECKSUM";
-    private static final String CYRET_ERR_CMD = "CYRET_ERR_CMD";
-    private static final String CYRET_ERR_DATA = "CYRET_ERR_DATA";
-    private static final String CYRET_ERR_DEVICE = "CYRET_ERR_DEVICE";
-    private static final String CYRET_ERR_EOF = "CYRET_ERR_EOF";
-    private static final String CYRET_ERR_FILE = "CYRET_ERR_FILE";
-    private static final String CYRET_ERR_LENGTH = "CYRET_ERR_LENGTH";
-    private static final String CYRET_ERR_ROW = "CYRET_ERR_ROW";
-    private static final String CYRET_ERR_UNK = "CYRET_ERR_UNK";
-    private static final String CYRET_ERR_VERSION = "CYRET_ERR_VERSION";
+    public static final String CYRET_ABORT = "CYRET_ABORT";
+    public static final String CYRET_BTLDR = "CYRET_BTLDR";
+    public static final String CYRET_ERR_ACTIVE = "CYRET_ERR_ACTIVE";
+    public static final String CYRET_ERR_APP = "CYRET_ERR_APP";
+    public static final String CYRET_ERR_ARRAY = "CYRET_ERR_ARRAY";
+    public static final String CYRET_ERR_CHECKSUM = "CYRET_ERR_CHECKSUM";
+    public static final String CYRET_ERR_CMD = "CYRET_ERR_CMD";
+    public static final String CYRET_ERR_DATA = "CYRET_ERR_DATA";
+    public static final String CYRET_ERR_DEVICE = "CYRET_ERR_DEVICE";
+    public static final String CYRET_ERR_EOF = "CYRET_ERR_EOF";
+    public static final String CYRET_ERR_FILE = "CYRET_ERR_FILE";
+    public static final String CYRET_ERR_LENGTH = "CYRET_ERR_LENGTH";
+    public static final String CYRET_ERR_ROW = "CYRET_ERR_ROW";
+    public static final String CYRET_ERR_UNK = "CYRET_ERR_UNK";
+    public static final String CYRET_ERR_VERSION = "CYRET_ERR_VERSION";
     private static final int DATA_END = 10;
     private static final int DATA_START = 8;
     private static final int END_ROW_END = 16;
@@ -81,7 +81,7 @@ public class OTAResponseReceiver extends BroadcastReceiver {
             } else if (Utils.getStringSharedPreference(this.mContext, Constants.PREF_BOOTLOADER_STATE).equalsIgnoreCase("59")) {
                 parseExitBootloader(hexValue);
             } else {
-                Log.i("OTAResponseReceiver", "In Receiver No case " + Utils.getStringSharedPreference(this.mContext, Constants.PREF_BOOTLOADER_STATE));
+
             }
         }
     }
@@ -93,7 +93,6 @@ public class OTAResponseReceiver extends BroadcastReceiver {
         int reponseBytes = Integer.parseInt(response, SILICON_REV_START);
         switch (reponseBytes) {
             case CASE_SUCCESS /*0*/:
-                Log.i("OTAResponseReceiver", "CYRET_SUCCESS");
                 Intent intent = new Intent(BootLoaderUtils.ACTION_OTA_STATUS);
                 Bundle mBundle = new Bundle();
                 mBundle.putString(Constants.EXTRA_SEND_DATA_ROW_STATUS, status);
@@ -101,18 +100,15 @@ public class OTAResponseReceiver extends BroadcastReceiver {
                 this.mContext.sendBroadcast(intent);
             default:
                 broadCastErrors(reponseBytes);
-                Log.i("OTAResponseReceiver", "CYRET ERROR");
         }
     }
 
     private void parseEnterBootLoaderAcknowledgement(String parse) {
         String result = parse.trim().replace(" ", "");
         String response = result.substring(RESPONSE_START, STATUS_START);
-        Log.e("OTAResponseReceiver", "Response>>>>>" + result);
         int reponseBytes = Integer.parseInt(response, SILICON_REV_START);
         switch (reponseBytes) {
             case CASE_SUCCESS /*0*/:
-                Log.i("OTAResponseReceiver", "CYRET_SUCCESS");
                 String siliconID = result.substring(START_ROW_START, SILICON_REV_START);
                 String siliconRev = result.substring(SILICON_REV_START, SILICON_REV_END);
                 Intent intent = new Intent(BootLoaderUtils.ACTION_OTA_STATUS);
@@ -123,18 +119,15 @@ public class OTAResponseReceiver extends BroadcastReceiver {
                 this.mContext.sendBroadcast(intent);
             default:
                 broadCastErrors(reponseBytes);
-                Log.i("OTAResponseReceiver", "CYRET ERROR");
         }
     }
 
     private void parseGetFlashSizeAcknowledgement(String parse) {
         String result = parse.trim().replace(" ", "");
         String response = result.substring(RESPONSE_START, STATUS_START);
-        Log.e("OTAResponseReceiver", "Get flash size Response>>>>>" + result);
         int reponseBytes = Integer.parseInt(response, SILICON_REV_START);
         switch (reponseBytes) {
             case CASE_SUCCESS /*0*/:
-                Log.i("OTAResponseReceiver", "CYRET_SUCCESS");
                 int startRow = BootLoaderUtils.swap(Integer.parseInt(result.substring(START_ROW_START, START_ROW_END), SILICON_REV_START));
                 int endRow = BootLoaderUtils.swap(Integer.parseInt(result.substring(START_ROW_END, SILICON_REV_START), SILICON_REV_START));
                 Intent intent = new Intent(BootLoaderUtils.ACTION_OTA_STATUS);
@@ -145,7 +138,6 @@ public class OTAResponseReceiver extends BroadcastReceiver {
                 this.mContext.sendBroadcast(intent);
             default:
                 broadCastErrors(reponseBytes);
-                Log.i("OTAResponseReceiver", "CYRET ERROR");
         }
     }
 
@@ -156,7 +148,6 @@ public class OTAResponseReceiver extends BroadcastReceiver {
         int reponseBytes = Integer.parseInt(response, SILICON_REV_START);
         switch (reponseBytes) {
             case CASE_SUCCESS /*0*/:
-                Log.i("OTAResponseReceiver", "CYRET_SUCCESS");
                 Intent intent = new Intent(BootLoaderUtils.ACTION_OTA_STATUS);
                 Bundle mBundle = new Bundle();
                 mBundle.putString(Constants.EXTRA_PROGRAM_ROW_STATUS, status);
@@ -164,7 +155,6 @@ public class OTAResponseReceiver extends BroadcastReceiver {
                 this.mContext.sendBroadcast(intent);
             default:
                 broadCastErrors(reponseBytes);
-                Log.i("OTAResponseReceiver", "CYRET ERROR");
         }
     }
 
@@ -175,7 +165,6 @@ public class OTAResponseReceiver extends BroadcastReceiver {
         int reponseBytes = Integer.parseInt(response, SILICON_REV_START);
         switch (reponseBytes) {
             case CASE_SUCCESS /*0*/:
-                Log.i("OTAResponseReceiver", "CYRET_SUCCESS");
                 Intent intent = new Intent(BootLoaderUtils.ACTION_OTA_STATUS);
                 Bundle mBundle = new Bundle();
                 mBundle.putString(Constants.EXTRA_VERIFY_ROW_STATUS, response);
@@ -184,7 +173,6 @@ public class OTAResponseReceiver extends BroadcastReceiver {
                 this.mContext.sendBroadcast(intent);
             default:
                 broadCastErrors(reponseBytes);
-                Log.i("OTAResponseReceiver", "CYRET ERROR");
         }
     }
 
@@ -195,7 +183,6 @@ public class OTAResponseReceiver extends BroadcastReceiver {
         int reponseBytes = Integer.parseInt(response, SILICON_REV_START);
         switch (reponseBytes) {
             case CASE_SUCCESS /*0*/:
-                Log.i("OTAResponseReceiver", "CYRET_SUCCESS");
                 Intent intent = new Intent(BootLoaderUtils.ACTION_OTA_STATUS);
                 Bundle mBundle = new Bundle();
                 mBundle.putString(Constants.EXTRA_VERIFY_CHECKSUM_STATUS, checkSumStatus);
@@ -203,13 +190,11 @@ public class OTAResponseReceiver extends BroadcastReceiver {
                 this.mContext.sendBroadcast(intent);
             default:
                 broadCastErrors(reponseBytes);
-                Log.i("OTAResponseReceiver", "CYRET ERROR");
         }
     }
 
     private void parseExitBootloader(String parse) {
         String response = parse.trim().replace(" ", "");
-        Log.e("OTAResponseReceiver", "Reponse Byte Exit>>" + response);
         Intent intent = new Intent(BootLoaderUtils.ACTION_OTA_STATUS);
         Bundle mBundle = new Bundle();
         mBundle.putString(Constants.EXTRA_VERIFY_EXIT_BOOTLOADER, response);

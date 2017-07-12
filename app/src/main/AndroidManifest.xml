@@ -17,6 +17,7 @@
             </intent-filter>
         </activity>
         <service android:name=".service.BLEService"></service>
+        <service android:name="com.cypress.cysmart.OTAFirmwareUpdate.OTAService"></service>
     </application>
 
 </manifest>

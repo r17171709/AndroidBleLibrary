@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -72,7 +71,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent!=null && intent.getIntExtra("command", 0)==1) {
-            startOta();
+            startOta(intent.getStringExtra("filepath"));
         }
         if (intent!=null && intent.getIntExtra("command", 0)==2) {
             onOtaExitBootloaderComplete(intent.getIntExtra("status", 0));
@@ -241,7 +240,6 @@ public class OTAService extends Service implements FileReadStatusUpdater {
                     else if(sharedPrefStatus.equalsIgnoreCase("" + BootLoaderCommands.EXIT_BOOTLOADER)){
                         CommonParams.mFileupgradeStarted = false;
                         saveDeviceAddress();
-                        Log.d("OTAService", "ota固件升级成功");
                         if (secondFileUpdatedNeeded()) {
                             Log.d("OTAService", "堆栈升级成功完成。应用程序升级悬而未决");
                             BLEFramework.getBleFrameworkInstance().updateOTAProgress(-1);
@@ -259,9 +257,10 @@ public class OTAService extends Service implements FileReadStatusUpdater {
                     if (extras.containsKey(Constants.EXTRA_ERROR_OTA)) {
                         String errorMessage = extras.getString(Constants.EXTRA_ERROR_OTA);
                         Log.d("OTAService", errorMessage);
-                        stopSelf();
-
-                        BLEFramework.getBleFrameworkInstance().updateOTAProgress(-1);
+                        if (errorMessage.equals(OTAResponseReceiver.CYRET_ABORT)) {
+                            BLEFramework.getBleFrameworkInstance().updateOTAProgress(-1);
+                            stopSelf();
+                        }
                     }
                 }
                 if (action.equals(BluetoothDevice.ACTION_BOND_STATE_CHANGED)) {
@@ -281,8 +280,8 @@ public class OTAService extends Service implements FileReadStatusUpdater {
         }
     };
 
-    public void startOta() {
-        prepareFileWriting(Environment.getExternalStorageDirectory().getPath()+ "/CySmart/BLE_Advertisement_OTA_BLB.cyacd");
+    public void startOta(String filepath) {
+        prepareFileWriting(filepath);
         mProgressBarPosition = 1;
         initializeBondingIFnotBonded();
     }
