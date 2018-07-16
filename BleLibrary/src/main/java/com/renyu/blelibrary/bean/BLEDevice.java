@@ -7,9 +7,9 @@ import android.bluetooth.BluetoothDevice;
  */
 
 public class BLEDevice {
-    BluetoothDevice device;
-    byte[] scanRecord;
-    int rssi;
+    private BluetoothDevice device;
+    private byte[] scanRecord;
+    private int rssi;
 
     public BluetoothDevice getDevice() {
         return device;

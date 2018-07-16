@@ -139,9 +139,6 @@ public class BLEService extends Service {
                 bleFramework.stopScan(true);
                 bleFramework.disconnect();
             }
-            if (intent.getStringExtra(Params.COMMAND).equals(Params.OTA)) {
-                bleFramework.startOTA(intent.getStringExtra("filePath"));
-            }
         }
         return super.onStartCommand(intent, flags, startId);
     }

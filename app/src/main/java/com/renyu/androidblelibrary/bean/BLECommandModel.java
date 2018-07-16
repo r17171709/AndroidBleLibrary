@@ -4,8 +4,8 @@ package com.renyu.androidblelibrary.bean;
  * Created by renyu on 16/3/3.
  */
 public class BLECommandModel {
-    String value;
-    int command;
+    private String value;
+    private int command;
 
     public String getValue() {
         return value;

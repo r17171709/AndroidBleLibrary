@@ -57,12 +57,10 @@ public class MainActivity extends AppCompatActivity {
         models.add("清空所有刷牙信息");
         models.add("通知当前app刷牙方位");
         models.add("获取uniqueid");
-        models.add("进入固件升级");
-        models.add("开始固件升级");
 
         EventBus.getDefault().register(this);
 
-        Button btn_scan= (Button) findViewById(R.id.btn_scan);
+        Button btn_scan= findViewById(R.id.btn_scan);
         btn_scan.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -71,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button btn_conn= (Button) findViewById(R.id.btn_conn);
+        Button btn_conn= findViewById(R.id.btn_conn);
         btn_conn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -81,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        rv_commands= (RecyclerView) findViewById(R.id.rv_commands);
+        rv_commands= findViewById(R.id.rv_commands);
         rv_commands.setHasFixedSize(true);
         rv_commands.setLayoutManager(new LinearLayoutManager(this));
         adapter=new MainAdapter(models, this);
@@ -119,6 +117,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEventMainThread(BLECommandModel model) {
-        Toast.makeText(this, model.getValue().toString(), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, model.getValue(), Toast.LENGTH_SHORT).show();
     }
 }

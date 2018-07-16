@@ -8,9 +8,4 @@ import android.bluetooth.BluetoothAdapter;
 
 public abstract class BLEScanCallBack implements BluetoothAdapter.LeScanCallback {
 
-    String scanName;
-
-    public BLEScanCallBack(String scanName) {
-        this.scanName=scanName;
-    }
 }

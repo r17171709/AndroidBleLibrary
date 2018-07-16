@@ -6,23 +6,17 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
-import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Build;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.cypress.cysmart.CommonUtils.Constants;
-import com.cypress.cysmart.OTAFirmwareUpdate.OTAService;
-import com.cypress.cysmart.Params.CommonParams;
 import com.renyu.blelibrary.bean.BLEDevice;
 import com.renyu.blelibrary.impl.BLEConnectListener;
 import com.renyu.blelibrary.impl.BLEOTAListener;
@@ -35,7 +29,6 @@ import com.renyu.blelibrary.impl.BLEWriteResponseListener;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -100,9 +93,6 @@ public class BLEFramework {
     // 当前连接的设备
     private BluetoothDevice currentDevice;
 
-    // OTA升级完成
-    private boolean endOTAFlag = false;
-
     // BLE连接回调
     private BLEConnectListener bleConnectListener;
     // BLE当前状态
@@ -118,7 +108,7 @@ public class BLEFramework {
 
     // app默认重连3次
     // 发起重连次数
-    int retryCount=0;
+    private int retryCount=0;
 
     public static BLEFramework getBleFrameworkInstance() {
         if (bleFramework==null) {
@@ -213,27 +203,14 @@ public class BLEFramework {
                 super.onServicesDiscovered(gatt, status);
                 BLEFramework.this.gatt=gatt;
                 if (status==BluetoothGatt.GATT_SUCCESS) {
-                    if (checkIsOTA()) {
-                        if (gatt.getService(BLEFramework.this.UUID_OTASERVICE)!=null) {
-                            BluetoothGattCharacteristic characteristic = gatt.getService(BLEFramework.this.UUID_OTASERVICE).getCharacteristic(BLEFramework.this.UUID_OTACharacteristic);
-                            if (enableNotification(characteristic, gatt, BLEFramework.this.UUID_OTADESCRIPTOR)) {
-                                currentCharacteristic = characteristic;
-                                setConnectionState(STATE_SERVICES_OTA_DISCOVERED);
-                                retryCount=0;
-                                return;
-                            }
-                        }
-                    }
-                    else {
-                        if (gatt.getService(BLEFramework.this.UUID_SERVICE)!=null) {
-                            BluetoothGattCharacteristic characteristic = gatt.getService(BLEFramework.this.UUID_SERVICE).getCharacteristic(BLEFramework.this.UUID_Characteristic_READ);
-                            if (enableNotification(characteristic, gatt, BLEFramework.this.UUID_DESCRIPTOR)) {
-                                // 连接通知服务完成
-                                currentCharacteristic = characteristic;
-                                setConnectionState(STATE_SERVICES_DISCOVERED);
-                                retryCount=0;
-                                return;
-                            }
+                    if (gatt.getService(BLEFramework.this.UUID_SERVICE)!=null) {
+                        BluetoothGattCharacteristic characteristic = gatt.getService(BLEFramework.this.UUID_SERVICE).getCharacteristic(BLEFramework.this.UUID_Characteristic_READ);
+                        if (enableNotification(characteristic, gatt, BLEFramework.this.UUID_DESCRIPTOR)) {
+                            // 连接通知服务完成
+                            currentCharacteristic = characteristic;
+                            setConnectionState(STATE_SERVICES_DISCOVERED);
+                            retryCount=0;
+                            return;
                         }
                     }
                 }
@@ -260,20 +237,6 @@ public class BLEFramework {
                 if (status==BluetoothGatt.GATT_SUCCESS) {
                     requestQueue.release();
                 }
-
-                if (!checkIsOTA()) {
-                    return;
-                }
-                synchronized (BLEFramework.class) {
-                    if(endOTAFlag) {
-                        endOTAFlag=false;
-
-                        Intent intent=new Intent(context, OTAService.class);
-                        intent.putExtra("command", 2);
-                        intent.putExtra("status", status);
-                        context.startService(intent);
-                    }
-                }
             }
 
             @Override
@@ -281,19 +244,8 @@ public class BLEFramework {
                 super.onCharacteristicChanged(gatt, characteristic);
                 BLEFramework.this.gatt=gatt;
 
-                //ota的指令
-                if (checkIsOTA()) {
-                    Intent intentOTA = new Intent(CommonParams.ACTION_OTA_DATA_AVAILABLE);
-                    Bundle mBundle = new Bundle();
-                    mBundle.putByteArray(Constants.EXTRA_BYTE_VALUE, characteristic.getValue());
-                    mBundle.putString(Constants.EXTRA_BYTE_UUID_VALUE, characteristic.getUuid().toString());
-                    intentOTA.putExtras(mBundle);
-                    BLEFramework.this.context.sendBroadcast(intentOTA);
-                }
-                else {
-                    if (bleWriteResponseListener!=null) {
-                        bleWriteResponseListener.getResponseValues(characteristic.getValue());
-                    }
+                if (bleWriteResponseListener!=null) {
+                    bleWriteResponseListener.getResponseValues(characteristic.getValue());
                 }
             }
 
@@ -340,7 +292,7 @@ public class BLEFramework {
     public synchronized void startScan() {
         // BLE扫描回调
         if (Build.VERSION_CODES.LOLLIPOP <= Build.VERSION.SDK_INT) {
-            bleScan21CallBack=new BLEScan21CallBack("") {
+            bleScan21CallBack=new BLEScan21CallBack() {
                 @Override
                 public void onScanResult(int callbackType, ScanResult result) {
                     super.onScanResult(callbackType, result);
@@ -365,7 +317,7 @@ public class BLEFramework {
             }, timeSeconds);
         }
         else {
-            leScanCallback=new BLEScanCallBack("") {
+            leScanCallback=new BLEScanCallBack() {
                 @Override
                 public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
                     if (device!=null && !tempsDevices.containsKey(device.getAddress())) {
@@ -402,7 +354,7 @@ public class BLEFramework {
     public synchronized void startScanAndConn(final String deviceName) {
         // BLE扫描回调
         if (Build.VERSION_CODES.LOLLIPOP <= Build.VERSION.SDK_INT) {
-            bleScan21CallBack=new BLEScan21CallBack(deviceName) {
+            bleScan21CallBack=new BLEScan21CallBack() {
                 @Override
                 public void onScanResult(int callbackType, ScanResult result) {
                     super.onScanResult(callbackType, result);
@@ -428,7 +380,7 @@ public class BLEFramework {
             }, timeSeconds);
         }
         else {
-            leScanCallback=new BLEScanCallBack(deviceName) {
+            leScanCallback=new BLEScanCallBack() {
                 @Override
                 public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
                     if (device!=null && !TextUtils.isEmpty(device.getName()) && deviceName.equals(device.getName())) {
@@ -588,36 +540,6 @@ public class BLEFramework {
      */
     public void readRSSI() {
         gatt.readRemoteRssi();
-    }
-
-    /**
-     * 检查是否进入OTA模式
-     */
-    public boolean checkIsOTA() {
-        List<BluetoothGattService> gattServices=gatt.getServices();
-        for (BluetoothGattService gattService : gattServices) {
-            if (gattService.getUuid().toString().equals(BLEFramework.this.UUID_OTASERVICE.toString())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 开启OTA升级
-     */
-    public void startOTA(String filepath) {
-        Intent intent=new Intent(context, OTAService.class);
-        intent.putExtra("command", 1);
-        intent.putExtra("filepath", filepath);
-        context.startService(intent);
-    }
-
-    /**
-     * OTA升级结束
-     */
-    public void endOTA() {
-        endOTAFlag=true;
     }
 
     /**
