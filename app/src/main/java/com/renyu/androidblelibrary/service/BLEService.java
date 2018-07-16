@@ -55,12 +55,9 @@ public class BLEService extends Service {
         bleFramework=BLEFramework.getBleFrameworkInstance();
         bleFramework.setParams(this.getApplicationContext(),
                 Params.UUID_SERVICE_MILI,
-                Params.UUID_SERVICE_OTASERVICE,
                 Params.UUID_SERVICE_WRITE,
                 Params.UUID_SERVICE_READ,
-                Params.UUID_SERVICE_OTA,
-                Params.UUID_DESCRIPTOR,
-                Params.UUID_DESCRIPTOR_OTA);
+                Params.UUID_DESCRIPTOR);
         bleFramework.setBleConnectListener(new BLEConnectListener() {
             @Override
             public void getAllScanDevice(BLEDevice bleDevice) {

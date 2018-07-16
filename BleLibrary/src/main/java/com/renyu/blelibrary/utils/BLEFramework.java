@@ -47,12 +47,9 @@ public class BLEFramework {
 
     // 服务UUID
     private UUID UUID_SERVICE = null;
-    private UUID UUID_OTASERVICE = null;
     private UUID UUID_Characteristic_WRITE = null;
     private UUID UUID_Characteristic_READ = null;
-    private UUID UUID_OTACharacteristic = null;
     private UUID UUID_DESCRIPTOR = null;
-    private UUID UUID_OTADESCRIPTOR = null;
 
     // 设备连接断开
     public static final int STATE_DISCONNECTED = 0;
@@ -61,13 +58,11 @@ public class BLEFramework {
     // 设备扫描结束
     public static final int STATE_SCANNED = 2;
     // 设备正在连接
-    public static final int STATE_CONNECTING = 3;
+    private static final int STATE_CONNECTING = 3;
     // 设备连接成功
-    public static final int STATE_CONNECTED = 4;
+    private static final int STATE_CONNECTED = 4;
     // 设备配置服务成功
     public static final int STATE_SERVICES_DISCOVERED = 5;
-    // 设备配置OTA服务成功
-    public static final int STATE_SERVICES_OTA_DISCOVERED = 6;
     // 当前设备状态
     private int connectionState=STATE_DISCONNECTED;
 
@@ -124,20 +119,14 @@ public class BLEFramework {
 
     public void setParams(Context context,
                           UUID UUID_SERVICE,
-                          UUID UUID_OTASERVICE,
                           UUID UUID_Characteristic_WRITE,
                           UUID UUID_Characteristic_READ,
-                          UUID UUID_OTACharacteristic,
-                          UUID UUID_DESCRIPTOR,
-                          UUID UUID_OTADESCRIPTOR) {
+                          UUID UUID_DESCRIPTOR) {
         this.context=context;
         this.UUID_SERVICE=UUID_SERVICE;
-        this.UUID_OTASERVICE=UUID_OTASERVICE;
         this.UUID_Characteristic_WRITE=UUID_Characteristic_WRITE;
         this.UUID_Characteristic_READ=UUID_Characteristic_READ;
-        this.UUID_OTACharacteristic=UUID_OTACharacteristic;
         this.UUID_DESCRIPTOR=UUID_DESCRIPTOR;
-        this.UUID_OTADESCRIPTOR=UUID_OTADESCRIPTOR;
     }
 
     public void initBLE() {
