@@ -19,7 +19,7 @@ import io.reactivex.disposables.Disposable;
  * Created by renyu on 2017/1/16.
  */
 
-public class RequestQueue {
+class RequestQueue {
 
     private volatile static RequestQueue queue;
 
@@ -27,8 +27,6 @@ public class RequestQueue {
     private ExecutorService service;
     // 单信号量
     private Semaphore semaphore;
-    // 循环队列
-    private Thread looperThread;
     private Handler looperHandler;
     // 超时释放信号量
     private Disposable delayDisposable;
@@ -38,7 +36,8 @@ public class RequestQueue {
 
         service= Executors.newSingleThreadExecutor();
         semaphore=new Semaphore(1);
-        looperThread=new Thread(new Runnable() {
+        // 循环队列
+        Thread looperThread=new Thread(new Runnable() {
             @Override
             public void run() {
                 Looper.prepare();
@@ -67,7 +66,7 @@ public class RequestQueue {
         looperThread.start();
     }
 
-    public static RequestQueue getQueueInstance(BLEFramework bleFramework) {
+    static RequestQueue getQueueInstance(BLEFramework bleFramework) {
         if (queue==null) {
             synchronized (RequestQueue.class) {
                 if (queue==null) {
@@ -82,7 +81,7 @@ public class RequestQueue {
      * 加入写命令队列
      * @param bytes
      */
-    public void addWriteCommand(final byte[] bytes) {
+    void addWriteCommand(final byte[] bytes) {
         Runnable runnable=new Runnable() {
             @Override
             public void run() {
@@ -127,7 +126,7 @@ public class RequestQueue {
      * @param serviceUUID
      * @param CharacUUID
      */
-    public void addReadCommand(final UUID serviceUUID, final UUID CharacUUID) {
+    void addReadCommand(final UUID serviceUUID, final UUID CharacUUID) {
         Runnable runnable=new Runnable() {
             @Override
             public void run() {
@@ -170,7 +169,7 @@ public class RequestQueue {
     /**
      * 释放信号量
      */
-    public void release() {
+    void release() {
         looperHandler.sendEmptyMessage(0x112);
     }
 }

@@ -117,6 +117,10 @@ public class BLEFramework {
         return bleFramework;
     }
 
+    private BLEFramework() {
+
+    }
+
     public void setParams(Context context,
                           UUID UUID_SERVICE,
                           UUID UUID_Characteristic_WRITE,
@@ -150,7 +154,6 @@ public class BLEFramework {
             @Override
             public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
                 super.onConnectionStateChange(gatt, status, newState);
-                BLEFramework.this.gatt=gatt;
                 switch (newState) {
                     // BLE连接完成
                     case BluetoothProfile.STATE_CONNECTED:
@@ -190,7 +193,6 @@ public class BLEFramework {
             @Override
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 super.onServicesDiscovered(gatt, status);
-                BLEFramework.this.gatt=gatt;
                 if (status==BluetoothGatt.GATT_SUCCESS) {
                     if (gatt.getService(BLEFramework.this.UUID_SERVICE)!=null) {
                         BluetoothGattCharacteristic characteristic = gatt.getService(BLEFramework.this.UUID_SERVICE).getCharacteristic(BLEFramework.this.UUID_Characteristic_READ);
@@ -199,6 +201,9 @@ public class BLEFramework {
                             currentCharacteristic = characteristic;
                             setConnectionState(STATE_SERVICES_DISCOVERED);
                             retryCount=0;
+
+                            BLEFramework.this.gatt=gatt;
+
                             return;
                         }
                     }
@@ -209,7 +214,6 @@ public class BLEFramework {
             @Override
             public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 super.onCharacteristicRead(gatt, characteristic, status);
-                BLEFramework.this.gatt=gatt;
                 if (status==BluetoothGatt.GATT_SUCCESS) {
                     requestQueue.release();
                 }
@@ -222,7 +226,6 @@ public class BLEFramework {
             @Override
             public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 super.onCharacteristicWrite(gatt, characteristic, status);
-                BLEFramework.this.gatt=gatt;
                 if (status==BluetoothGatt.GATT_SUCCESS) {
                     requestQueue.release();
                 }
@@ -231,8 +234,6 @@ public class BLEFramework {
             @Override
             public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
                 super.onCharacteristicChanged(gatt, characteristic);
-                BLEFramework.this.gatt=gatt;
-
                 if (bleWriteResponseListener!=null) {
                     bleWriteResponseListener.getResponseValues(characteristic.getValue());
                 }
@@ -241,8 +242,6 @@ public class BLEFramework {
             @Override
             public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
                 super.onReadRemoteRssi(gatt, rssi, status);
-                BLEFramework.this.gatt=gatt;
-
                 if (blerssiListener!=null) {
                     blerssiListener.getRssi(rssi);
                 }
@@ -491,7 +490,7 @@ public class BLEFramework {
      * @param serviceUUID
      * @param CharacUUID
      */
-    protected void readCharacteristic(UUID serviceUUID, UUID CharacUUID) {
+    void readCharacteristic(UUID serviceUUID, UUID CharacUUID) {
         if (gatt!=null) {
             BluetoothGattCharacteristic characteristic = gatt.getService(serviceUUID).getCharacteristic(CharacUUID);
             if (characteristic==null) {
@@ -528,7 +527,9 @@ public class BLEFramework {
      * 读取RSSI
      */
     public void readRSSI() {
-        gatt.readRemoteRssi();
+        if (gatt != null) {
+            gatt.readRemoteRssi();
+        }
     }
 
     /**
@@ -628,9 +629,8 @@ public class BLEFramework {
     public synchronized boolean refreshDeviceCache() {
         try {
             final Method refresh = BluetoothGatt.class.getMethod("refresh");
-            if (refresh != null && gatt != null) {
-                final boolean success = (Boolean) refresh.invoke(gatt);
-                return success;
+            if (gatt != null) {
+                return (boolean) (Boolean) refresh.invoke(gatt);
             }
         } catch (Exception e) {
 
