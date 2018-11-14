@@ -10,13 +10,18 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.ScanResult;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.cypress.cysmart.CommonUtils.Constants;
+import com.cypress.cysmart.DataModelClasses.CommonParams;
+import com.cypress.cysmart.OTAFirmwareUpdate.OTAService;
 import com.renyu.blelibrary.bean.BLEDevice;
 import com.renyu.blelibrary.impl.BLEConnectListener;
 import com.renyu.blelibrary.impl.BLEOTAListener;
@@ -105,6 +110,10 @@ public class BLEFramework {
     // 发起重连次数
     private int retryCount=0;
 
+    // OTA标记
+    public static boolean isOTA=false;
+    private boolean m_otaExitBootloaderCmdInProgress = false;
+
     public static BLEFramework getBleFrameworkInstance() {
         if (bleFramework==null) {
             synchronized (BLEFramework.class) {
@@ -178,13 +187,7 @@ public class BLEFramework {
                                     });
                         }
                         else {
-                            gatt.close();
-                            BLEFramework.this.gatt=null;
-                            BLEFramework.this.currentCharacteristic=null;
-                            BLEFramework.this.currentDevice=null;
-
-                            setConnectionState(STATE_DISCONNECTED);
-                            retryCount=0;
+                            close();
                         }
                         break;
                 }
@@ -226,16 +229,45 @@ public class BLEFramework {
             @Override
             public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 super.onCharacteristicWrite(gatt, characteristic, status);
+
                 if (status==BluetoothGatt.GATT_SUCCESS) {
                     requestQueue.release();
+                    if (!checkIsOTA()) {
+                        return;
+                    }
+                }
+
+                boolean isExitBootloaderCmd = false;
+                synchronized (BLEFramework.class) {
+                    isExitBootloaderCmd = m_otaExitBootloaderCmdInProgress;
+                    if(m_otaExitBootloaderCmdInProgress)
+                        m_otaExitBootloaderCmdInProgress = false;
+                }
+                if(isExitBootloaderCmd) {
+                    Intent intent=new Intent(context, OTAService.class);
+                    intent.putExtra("command", 2);
+                    intent.putExtra("status", status);
+                    context.startService(intent);
                 }
             }
 
             @Override
             public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
                 super.onCharacteristicChanged(gatt, characteristic);
-                if (bleWriteResponseListener!=null) {
-                    bleWriteResponseListener.getResponseValues(characteristic.getValue());
+
+                //ota的指令
+                if (CommonParams.UUID_SERVICE_OTA.toString().equals(characteristic.getUuid().toString())) {
+                    Intent intentOTA = new Intent(CommonParams.ACTION_OTA_DATA_AVAILABLE);
+                    Bundle mBundle = new Bundle();
+                    mBundle.putByteArray(Constants.EXTRA_BYTE_VALUE, characteristic.getValue());
+                    mBundle.putString(Constants.EXTRA_BYTE_UUID_VALUE, characteristic.getUuid().toString());
+                    intentOTA.putExtras(mBundle);
+                    BLEFramework.this.context.sendBroadcast(intentOTA);
+                }
+                else {
+                    if (bleWriteResponseListener!=null) {
+                        bleWriteResponseListener.getResponseValues(characteristic.getValue());
+                    }
                 }
             }
 
@@ -636,5 +668,43 @@ public class BLEFramework {
 
         }
         return false;
+    }
+
+    public void close() {
+        gatt.close();
+        BLEFramework.this.gatt=null;
+        BLEFramework.this.currentCharacteristic=null;
+        BLEFramework.this.currentDevice=null;
+
+        setConnectionState(STATE_DISCONNECTED);
+        retryCount=0;
+    }
+
+    /**
+     * 检查是否进入OTA模式
+     */
+    private boolean checkIsOTA() {
+//        List<BluetoothGattService> gattServices=gatt.getServices();
+//        for (BluetoothGattService gattService : gattServices) {
+//            Log.d("BLEService", gattService.getUuid().toString());
+//            if (gattService.getUuid().toString().equals(CommonParams.UUID_SERVICE_OTASERVICE.toString())) {
+//                return true;
+//            }
+//        }
+        return isOTA;
+    }
+
+    /**
+     * 开启OTA模式
+     */
+    public void startOTA() {
+        Intent intent=new Intent(context, OTAService.class);
+        intent.putExtra("command", 1);
+        context.startService(intent);
+    }
+
+    /**************  提供给OTA服务使用的对象  ****************/
+    public void setM_otaExitBootloaderCmdInProgress(boolean m_otaExitBootloaderCmdInProgress) {
+        this.m_otaExitBootloaderCmdInProgress=m_otaExitBootloaderCmdInProgress;
     }
 }
