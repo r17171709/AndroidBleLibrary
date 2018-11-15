@@ -68,4 +68,13 @@ public class Utils {
     public static int convert2To10(String hex) {
         return Integer.valueOf(hex, 2);
     }
+
+    /**
+     * 十进制转十六进制
+     * @param i
+     * @return
+     */
+    public static String convert10To16(int i) {
+        return Integer.toHexString(i);
+    }
 }
