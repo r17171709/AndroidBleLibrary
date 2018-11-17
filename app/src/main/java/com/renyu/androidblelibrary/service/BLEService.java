@@ -53,18 +53,12 @@ public class BLEService extends Service {
         receiverCommandMaps=new HashMap<>();
 
         bleFramework=BLEFramework.getBleFrameworkInstance();
-        bleFramework.setParams(this.getApplicationContext(),
-                Params.UUID_SERVICE_MILI,
-                Params.UUID_SERVICE_WRITE,
-                Params.UUID_SERVICE_READ,
-                Params.UUID_DESCRIPTOR);
+        bleFramework.setParams(this.getApplicationContext());
         bleFramework.setBleConnectListener(new BLEConnectListener() {
             @Override
             public void getAllScanDevice(BLEDevice bleDevice) {
                 Log.d("BLEService", bleDevice.getDevice().getName() + " " + bleDevice.getDevice().getAddress());
-                if (!TextUtils.isEmpty(bleDevice.getDevice().getName()) && bleDevice.getDevice().getName().startsWith("iite-brush123")) {
-                    EventBus.getDefault().post(bleDevice);
-                }
+                EventBus.getDefault().post(bleDevice);
             }
         });
         bleFramework.setBleStateChangeListener(new BLEStateChangeListener() {
@@ -124,7 +118,7 @@ public class BLEService extends Service {
                 bleFramework.startScanAndConn(intent.getStringExtra(Params.DEVICE));
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.WRITE)) {
-                bleFramework.addWriteCommand(intent.getByteArrayExtra(Params.BYTECODE));
+                bleFramework.addWriteCommand(Params.UUID_SERVICE_MILI, Params.UUID_SERVICE_WRITE, intent.getByteArrayExtra(Params.BYTECODE));
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.READ)) {
                 bleFramework.addReadCommand((UUID) intent.getSerializableExtra(Params.SERVICEUUID), (UUID) intent.getSerializableExtra(Params.CHARACUUID));

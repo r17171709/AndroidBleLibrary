@@ -79,9 +79,11 @@ class RequestQueue {
 
     /**
      * 加入写命令队列
+     * @param serviceUUID
+     * @param characUUID
      * @param bytes
      */
-    void addWriteCommand(final byte[] bytes) {
+    void addWriteCommand(final UUID serviceUUID, final UUID characUUID, final byte[] bytes) {
         Runnable runnable=new Runnable() {
             @Override
             public void run() {
@@ -112,7 +114,7 @@ class RequestQueue {
 
                     }
                 });
-                bleFramework.writeCharacteristic(bytes);
+                bleFramework.writeCharacteristic(serviceUUID, characUUID, bytes);
             }
         };
         Message message=new Message();
@@ -124,9 +126,9 @@ class RequestQueue {
     /**
      * 加入读命令队列
      * @param serviceUUID
-     * @param CharacUUID
+     * @param characUUID
      */
-    void addReadCommand(final UUID serviceUUID, final UUID CharacUUID) {
+    void addReadCommand(final UUID serviceUUID, final UUID characUUID) {
         Runnable runnable=new Runnable() {
             @Override
             public void run() {
@@ -157,7 +159,7 @@ class RequestQueue {
 
                     }
                 });
-                bleFramework.readCharacteristic(serviceUUID, CharacUUID);
+                bleFramework.readCharacteristic(serviceUUID, characUUID);
             }
         };
         Message message=new Message();

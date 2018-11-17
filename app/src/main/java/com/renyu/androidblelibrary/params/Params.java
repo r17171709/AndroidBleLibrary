@@ -27,6 +27,33 @@ public class Params {
     public static final UUID UUID_SERVICE_OTA=UUID.fromString("00060001-F8CE-11E4-ABF4-0002A5D5C51B");
     public static final UUID UUID_DESCRIPTOR_OTA=UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
 
+    /**
+     * bluetoothGattService:00001800-0000-1000-8000-00805f9b34fb
+     * bluetoothGattCharacteristic:00002a00-0000-1000-8000-00805f9b34fb
+     * bluetoothGattCharacteristic:00002a01-0000-1000-8000-00805f9b34fb
+     * bluetoothGattCharacteristic:00002a04-0000-1000-8000-00805f9b34fb
+     *
+     * bluetoothGattService:00001801-0000-1000-8000-00805f9b34fb
+     * bluetoothGattCharacteristic:00002a05-0000-1000-8000-00805f9b34fb
+     * bluetoothGattDescriptor:00002902-0000-1000-8000-00805f9b34fb
+     *
+     * bluetoothGattService:0000180a-0000-1000-8000-00805f9b34fb
+     * bluetoothGattCharacteristic:00002a29-0000-1000-8000-00805f9b34fb
+     * bluetoothGattCharacteristic:00002a25-0000-1000-8000-00805f9b34fb
+     * bluetoothGattCharacteristic:00002a27-0000-1000-8000-00805f9b34fb
+     * bluetoothGattCharacteristic:00002a26-0000-1000-8000-00805f9b34fb
+     *
+     * bluetoothGattService:e53a96fd-bc51-4a3a-a397-4b759661b7cf
+     * bluetoothGattCharacteristic:0000cdd1-0000-1000-8000-00805f9b34fb
+     * bluetoothGattDescriptor:00002902-0000-1000-8000-00805f9b34fb
+     * bluetoothGattCharacteristic:0000cdd2-0000-1000-8000-00805f9b34fb
+     *
+     * bluetoothGattService:0000180f-0000-1000-8000-00805f9b34fb
+     * bluetoothGattCharacteristic:00002a19-0000-1000-8000-00805f9b34fb
+     * bluetoothGattDescriptor:00002904-0000-1000-8000-00805f9b34fb
+     * bluetoothGattDescriptor:00002902-0000-1000-8000-00805f9b34fb
+     */
+
     //BLE相关
     //BLE获取电池电量信息
     public static final int BLE_COMMAND_BATTERY=106;
@@ -66,6 +93,8 @@ public class Params {
     public static final int BLE_COMMAND_GETUID=197;
     //进入固件升级模式 172
     public static final int BLE_COMMAND_UPDATE=172;
+
+    public static final int RESULT_ENABLE_BT = 101;
 
     public final static String COMMAND="command";
     // 扫描指令

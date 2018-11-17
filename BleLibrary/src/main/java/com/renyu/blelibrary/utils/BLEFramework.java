@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.ScanResult;
@@ -50,12 +51,6 @@ public class BLEFramework {
 
     private volatile static BLEFramework bleFramework;
 
-    // 服务UUID
-    private UUID UUID_SERVICE = null;
-    private UUID UUID_Characteristic_WRITE = null;
-    private UUID UUID_Characteristic_READ = null;
-    private UUID UUID_DESCRIPTOR = null;
-
     // 设备连接断开
     public static final int STATE_DISCONNECTED = 0;
     // 设备正在扫描
@@ -68,6 +63,8 @@ public class BLEFramework {
     private static final int STATE_CONNECTED = 4;
     // 设备配置服务成功
     public static final int STATE_SERVICES_DISCOVERED = 5;
+    // 设备正在执行OTA
+    public static final int STATE_SERVICES_OTA_DISCOVERED = 6;
     // 当前设备状态
     private int connectionState=STATE_DISCONNECTED;
 
@@ -88,8 +85,6 @@ public class BLEFramework {
     private BluetoothGattCallback bleGattCallback;
     // 当前连接的gatt对象
     private BluetoothGatt gatt;
-    // 当前连接的Characteristic
-    private BluetoothGattCharacteristic currentCharacteristic;
     // 当前连接的设备
     private BluetoothDevice currentDevice;
 
@@ -112,6 +107,8 @@ public class BLEFramework {
 
     // OTA标记
     public static boolean isOTA=false;
+    // OTA服务所需Characteristic
+    private BluetoothGattCharacteristic mOTACharacteristic;
     private boolean m_otaExitBootloaderCmdInProgress = false;
 
     public static BLEFramework getBleFrameworkInstance() {
@@ -130,16 +127,12 @@ public class BLEFramework {
 
     }
 
-    public void setParams(Context context,
-                          UUID UUID_SERVICE,
-                          UUID UUID_Characteristic_WRITE,
-                          UUID UUID_Characteristic_READ,
-                          UUID UUID_DESCRIPTOR) {
+    /**
+     * 设置Context
+     * @param context
+     */
+    public void setParams(Context context) {
         this.context=context;
-        this.UUID_SERVICE=UUID_SERVICE;
-        this.UUID_Characteristic_WRITE=UUID_Characteristic_WRITE;
-        this.UUID_Characteristic_READ=UUID_Characteristic_READ;
-        this.UUID_DESCRIPTOR=UUID_DESCRIPTOR;
     }
 
     public void initBLE() {
@@ -196,19 +189,30 @@ public class BLEFramework {
             @Override
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 super.onServicesDiscovered(gatt, status);
+                BLEFramework.this.gatt=gatt;
                 if (status==BluetoothGatt.GATT_SUCCESS) {
-                    if (gatt.getService(BLEFramework.this.UUID_SERVICE)!=null) {
-                        BluetoothGattCharacteristic characteristic = gatt.getService(BLEFramework.this.UUID_SERVICE).getCharacteristic(BLEFramework.this.UUID_Characteristic_READ);
-                        if (enableNotification(characteristic, gatt, BLEFramework.this.UUID_DESCRIPTOR)) {
-                            // 连接通知服务完成
-                            currentCharacteristic = characteristic;
-                            setConnectionState(STATE_SERVICES_DISCOVERED);
-                            retryCount=0;
-
-                            BLEFramework.this.gatt=gatt;
-
-                            return;
+                    if (checkIsOTA()) {
+                        if (gatt.getService(CommonParams.UUID_SERVICE_OTASERVICE)!=null) {
+                            BluetoothGattCharacteristic characteristic = gatt.getService(CommonParams.UUID_SERVICE_OTASERVICE).getCharacteristic(CommonParams.UUID_SERVICE_OTA);
+                            if (enableNotification(characteristic, gatt, CommonParams.UUID_DESCRIPTOR_OTA)) {
+                                mOTACharacteristic = characteristic;
+                                setConnectionState(STATE_SERVICES_OTA_DISCOVERED);
+                                return;
+                            }
                         }
+                    }
+                    else {
+                        for (BluetoothGattService bluetoothGattService : gatt.getServices()) {
+                            for (BluetoothGattCharacteristic bluetoothGattCharacteristic : bluetoothGattService.getCharacteristics()) {
+                                for (BluetoothGattDescriptor bluetoothGattDescriptor : bluetoothGattCharacteristic.getDescriptors()) {
+                                    enableNotification(bluetoothGattCharacteristic, gatt, bluetoothGattDescriptor.getUuid());
+                                }
+                            }
+                        }
+                        // 连接通知服务完成
+                        setConnectionState(STATE_SERVICES_DISCOVERED);
+                        retryCount=0;
+                        return;
                     }
                 }
                 disconnect();
@@ -237,7 +241,7 @@ public class BLEFramework {
                     }
                 }
 
-                boolean isExitBootloaderCmd = false;
+                boolean isExitBootloaderCmd;
                 synchronized (BLEFramework.class) {
                     isExitBootloaderCmd = m_otaExitBootloaderCmdInProgress;
                     if(m_otaExitBootloaderCmdInProgress)
@@ -489,20 +493,13 @@ public class BLEFramework {
 
     /**
      * 发送数据
+     * @param serviceUUID
+     * @param characUUID
      * @param value
      */
-    protected void writeCharacteristic(byte[] value) {
-        writeCharacteristic(UUID_Characteristic_WRITE, value);
-    }
-
-    /**
-     * 发送数据
-     * @param uuid
-     * @param value
-     */
-    protected void writeCharacteristic(UUID uuid, byte[] value) {
+    void writeCharacteristic(UUID serviceUUID, UUID characUUID, byte[] value) {
         if (gatt!=null) {
-            BluetoothGattCharacteristic characteristic = gatt.getService(UUID_SERVICE).getCharacteristic(uuid);
+            BluetoothGattCharacteristic characteristic = gatt.getService(serviceUUID).getCharacteristic(characUUID);
             if (characteristic==null) {
                 Log.d("BLEFramework", "writeCharacteristic中uuid不存在");
                 return;
@@ -542,8 +539,8 @@ public class BLEFramework {
      * 发送写命令队列
      * @param sendValue
      */
-    public void addWriteCommand(byte[] sendValue) {
-        requestQueue.addWriteCommand(sendValue);
+    public void addWriteCommand(UUID serviceUUID, UUID characUUID, byte[] sendValue) {
+        requestQueue.addWriteCommand(serviceUUID, characUUID, sendValue);
     }
 
     /**
@@ -551,7 +548,7 @@ public class BLEFramework {
      * @param serviceUUID
      * @param CharacUUID
      */
-    public void addReadCommand(final UUID serviceUUID, final UUID CharacUUID) {
+    public void addReadCommand(UUID serviceUUID, UUID CharacUUID) {
         requestQueue.addReadCommand(serviceUUID, CharacUUID);
     }
 
@@ -574,12 +571,11 @@ public class BLEFramework {
     }
 
     /**
-     * 获取当前连接的Characteristic
+     * 获取当前OTA连接的Characteristic
      * @return
      */
-    public BluetoothGattCharacteristic getCurrentCharacteristic() {
-        if (currentCharacteristic==null) throw new RuntimeException("BLE服务没有启动");
-        return currentCharacteristic;
+    public BluetoothGattCharacteristic getOTACharacteristic() {
+        return mOTACharacteristic;
     }
 
     /**
@@ -673,7 +669,6 @@ public class BLEFramework {
     public void close() {
         gatt.close();
         BLEFramework.this.gatt=null;
-        BLEFramework.this.currentCharacteristic=null;
         BLEFramework.this.currentDevice=null;
 
         setConnectionState(STATE_DISCONNECTED);

@@ -52,7 +52,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
         filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         registerReceiver(receiver, filter);
 
-        mOTACharacteristic=BLEFramework.getBleFrameworkInstance().getCurrentCharacteristic();
+        mOTACharacteristic=BLEFramework.getBleFrameworkInstance().getOTACharacteristic();
         mBluetoothDeviceAddress=BLEFramework.getBleFrameworkInstance().getCurrentBluetoothDevice().getAddress();
     }
 
