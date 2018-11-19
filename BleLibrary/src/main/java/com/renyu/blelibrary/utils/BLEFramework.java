@@ -36,12 +36,6 @@ import com.renyu.blelibrary.impl.BLEWriteResponseListener;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.functions.Consumer;
-import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by renyu on 2017/1/12.
@@ -100,10 +94,6 @@ public class BLEFramework {
     private BLEReadResponseListener bleReadResponseListener;
     // RSSI回调
     private BLERSSIListener blerssiListener;
-
-    // app默认重连3次
-    // 发起重连次数
-    private int retryCount=0;
 
     // OTA标记
     public static boolean isOTA=false;
@@ -165,23 +155,7 @@ public class BLEFramework {
                         break;
                     // BLE断开连接
                     case BluetoothProfile.STATE_DISCONNECTED:
-                        // 连接不上的时候进行重连
-                        if (connectionState==STATE_CONNECTING && retryCount<3 && currentDevice!=null) {
-                            Log.d("BLEFramework", "重连重试");
-                            Observable.timer(1, TimeUnit.SECONDS)
-                                    .subscribeOn(Schedulers.io())
-                                    .observeOn(AndroidSchedulers.mainThread())
-                                    .subscribe(new Consumer<Long>() {
-                                        @Override
-                                        public void accept(Long aLong) throws Exception {
-                                            startConn(currentDevice);
-                                            retryCount++;
-                                        }
-                                    });
-                        }
-                        else {
-                            close();
-                        }
+                        close();
                         break;
                 }
             }
@@ -211,7 +185,6 @@ public class BLEFramework {
                         }
                         // 连接通知服务完成
                         setConnectionState(STATE_SERVICES_DISCOVERED);
-                        retryCount=0;
                         return;
                     }
                 }
@@ -672,7 +645,6 @@ public class BLEFramework {
         BLEFramework.this.currentDevice=null;
 
         setConnectionState(STATE_DISCONNECTED);
-        retryCount=0;
     }
 
     /**
