@@ -58,9 +58,9 @@ public class BLEFramework {
     // 设备扫描结束
     public static final int STATE_SCANNED = 2;
     // 设备正在连接
-    private static final int STATE_CONNECTING = 3;
+    public static final int STATE_CONNECTING = 3;
     // 设备连接成功
-    private static final int STATE_CONNECTED = 4;
+    public static final int STATE_CONNECTED = 4;
     // 设备配置服务成功
     public static final int STATE_SERVICES_DISCOVERED = 5;
     // 设备正在执行OTA

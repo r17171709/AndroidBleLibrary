@@ -29,10 +29,10 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    ArrayList<BLEDevice> devices;
-
-    // 当前Scan制定的Device
+    // 指定当前Scan的Device
     String currentDevice;
+    // 扫描到的Device设备集合
+    ArrayList<BLEDevice> devices;
 
     RecyclerView rv_commands;
     MainAdapter adapter;
