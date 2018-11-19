@@ -280,7 +280,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
     };
 
     public void startOta() {
-        prepareFileWriting(Environment.getExternalStorageDirectory().getPath()+ "/CySmart/BLE_Advertisement_OTA_BLB.cyacd");
+        prepareFileWriting(Environment.getExternalStorageDirectory().getPath()+ "/CySmart/BLE_OTA_Bootloadable.cyacd");
         mProgressBarPosition = 1;
         initializeBondingIFnotBonded();
     }

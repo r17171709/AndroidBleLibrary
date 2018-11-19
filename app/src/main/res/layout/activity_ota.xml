@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <Button
+        android:text="点击连接设备并发送指令"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button_startota"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/textView13"
+        app:layout_constraintLeft_toLeftOf="@+id/textView13" />
+
+    <TextView
+        android:text="1. 点击连接设备并发送进入OTA模式命令，升级文件请放置在SD卡根目录下CySmart文件夹中，文件名为BLE_OTA_Bootloadable.cyacd"
+        android:layout_width="308dp"
+        android:layout_height="59dp"
+        android:id="@+id/textView13"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="16dp"
+        app:layout_constraintLeft_toLeftOf="parent" />
+
+    <TextView
+        android:text="2. 如果此时绿灯常亮，说明已经进入ota模式，请点击开始"
+        android:layout_width="252dp"
+        android:layout_height="38dp"
+        android:id="@+id/textView14"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/button_startota"
+        app:layout_constraintLeft_toLeftOf="@+id/button_startota" />
+
+    <Button
+        android:text="开始升级"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button_update"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/textView14"
+        app:layout_constraintLeft_toLeftOf="@+id/textView14" />
+
+    <TextView
+        android:layout_width="252dp"
+        android:layout_height="33dp"
+        android:id="@+id/tv_progress"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/button_update"
+        app:layout_constraintLeft_toLeftOf="@+id/button_update" />
+</android.support.constraint.ConstraintLayout>

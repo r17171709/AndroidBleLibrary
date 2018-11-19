@@ -9,7 +9,10 @@ public class Params {
 
     //BLE相关
     //服务 UUID
+    // 牙刷
     public static final UUID UUID_SERVICE_MILI=UUID.fromString("E53A96FD-BC51-4A3A-A397-4B759661B7CF");
+    // 设备精灵 OTA使用
+//    public static final UUID UUID_SERVICE_MILI=UUID.fromString("0a2be667-2416-4373-b583-1147d905e39f");
     public static final UUID UUID_SERVICE_WRITE=UUID.fromString("0000cdd2-0000-1000-8000-00805f9b34fb");
     public static final UUID UUID_SERVICE_READ=UUID.fromString("0000cdd1-0000-1000-8000-00805f9b34fb");
     public static final UUID UUID_DESCRIPTOR=UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");

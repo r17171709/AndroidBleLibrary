@@ -18,7 +18,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.cypress.cysmart.CommonUtils.Constants;
 import com.cypress.cysmart.DataModelClasses.CommonParams;
@@ -239,7 +238,7 @@ public class BLEFramework {
                     mBundle.putByteArray(Constants.EXTRA_BYTE_VALUE, characteristic.getValue());
                     mBundle.putString(Constants.EXTRA_BYTE_UUID_VALUE, characteristic.getUuid().toString());
                     intentOTA.putExtras(mBundle);
-                    BLEFramework.this.context.sendBroadcast(intentOTA);
+                    context.sendBroadcast(intentOTA);
                 }
                 else {
                     if (bleWriteResponseListener!=null) {
@@ -562,15 +561,6 @@ public class BLEFramework {
 
     public void updateOTAProgress(int progress) {
         if (bleotaListener!=null) {
-            if (progress==-1) {
-                Toast.makeText(context, "升级失败", Toast.LENGTH_SHORT).show();
-            }
-            else if (progress==101) {
-                Toast.makeText(context, "升级成功", Toast.LENGTH_SHORT).show();
-            }
-            else {
-                Toast.makeText(context, "升级完成"+progress+"%", Toast.LENGTH_SHORT).show();
-            }
             bleotaListener.showProgress(progress);
         }
     }
@@ -640,9 +630,11 @@ public class BLEFramework {
     }
 
     public void close() {
-        gatt.close();
-        BLEFramework.this.gatt=null;
-        BLEFramework.this.currentDevice=null;
+        if (gatt != null) {
+            gatt.close();
+        }
+        gatt=null;
+        currentDevice=null;
 
         setConnectionState(STATE_DISCONNECTED);
     }
