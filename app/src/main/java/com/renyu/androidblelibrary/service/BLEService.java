@@ -2,10 +2,13 @@ package com.renyu.androidblelibrary.service;
 
 import android.app.Service;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -19,6 +22,7 @@ import com.renyu.blelibrary.impl.BLERSSIListener;
 import com.renyu.blelibrary.impl.BLEReadResponseListener;
 import com.renyu.blelibrary.impl.BLEStateChangeListener;
 import com.renyu.blelibrary.impl.BLEWriteResponseListener;
+import com.renyu.blelibrary.impl.IScanAndConnRule;
 import com.renyu.blelibrary.utils.BLEFramework;
 
 import org.greenrobot.eventbus.EventBus;
@@ -115,7 +119,19 @@ public class BLEService extends Service {
             }
             // 家iite-j6J7Nj  公司iite-N3Uf2e
             if (intent.getStringExtra(Params.COMMAND).equals(Params.SCANCONN)) {
-                bleFramework.startScanAndConn(intent.getStringExtra(Params.DEVICE));
+                final String deviceName = intent.getStringExtra(Params.DEVICE);
+                bleFramework.startScanAndConn(new IScanAndConnRule() {
+                    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+                    @Override
+                    public boolean rule21(ScanResult result) {
+                        return !TextUtils.isEmpty(result.getDevice().getName()) && result.getDevice().getName().equals(deviceName);
+                    }
+
+                    @Override
+                    public boolean rule(BluetoothDevice device) {
+                        return deviceName.equals(device.getName());
+                    }
+                });
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.WRITE)) {
                 bleFramework.addWriteCommand(Params.UUID_SERVICE_MILI, Params.UUID_SERVICE_WRITE, intent.getByteArrayExtra(Params.BYTECODE));

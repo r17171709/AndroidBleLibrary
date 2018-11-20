@@ -31,6 +31,7 @@ import com.renyu.blelibrary.impl.BLEScan21CallBack;
 import com.renyu.blelibrary.impl.BLEScanCallBack;
 import com.renyu.blelibrary.impl.BLEStateChangeListener;
 import com.renyu.blelibrary.impl.BLEWriteResponseListener;
+import com.renyu.blelibrary.impl.IScanAndConnRule;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -345,16 +346,16 @@ public class BLEFramework {
 
     /**
      * 扫描完成直接连接
-     * @param deviceName
+     * @param iScanAndConnRule
      */
-    public synchronized void startScanAndConn(final String deviceName) {
+    public synchronized void startScanAndConn(final IScanAndConnRule iScanAndConnRule) {
         // BLE扫描回调
         if (Build.VERSION_CODES.LOLLIPOP <= Build.VERSION.SDK_INT) {
             bleScan21CallBack=new BLEScan21CallBack() {
                 @Override
                 public void onScanResult(int callbackType, ScanResult result) {
                     super.onScanResult(callbackType, result);
-                    if (result !=null && result.getDevice()!=null && !TextUtils.isEmpty(result.getDevice().getName()) && result.getDevice().getName().equals(deviceName)) {
+                    if (result !=null && result.getDevice()!=null && iScanAndConnRule.rule21(result)) {
                         BLEDevice device1=new BLEDevice();
                         device1.setRssi(result.getRssi());
                         device1.setDevice(result.getDevice());
@@ -379,7 +380,7 @@ public class BLEFramework {
             leScanCallback=new BLEScanCallBack() {
                 @Override
                 public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-                    if (device!=null && !TextUtils.isEmpty(device.getName()) && deviceName.equals(device.getName())) {
+                    if (device!=null && !TextUtils.isEmpty(device.getName()) && iScanAndConnRule.rule(device)) {
                         BLEDevice device1=new BLEDevice();
                         device1.setRssi(rssi);
                         device1.setDevice(device);
