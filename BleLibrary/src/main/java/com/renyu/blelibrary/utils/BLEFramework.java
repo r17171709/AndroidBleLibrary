@@ -356,13 +356,16 @@ public class BLEFramework {
                 public void onScanResult(int callbackType, ScanResult result) {
                     super.onScanResult(callbackType, result);
                     if (result !=null && result.getDevice()!=null && iScanAndConnRule.rule21(result)) {
-                        BLEDevice device1=new BLEDevice();
-                        device1.setRssi(result.getRssi());
-                        device1.setDevice(result.getDevice());
-                        device1.setScanRecord(result.getScanRecord().getBytes());
-                        bleConnectListener.getAllScanDevice(device1);
-                        stopScan(false);
-                        startConn(result.getDevice());
+                        // 已经发生了连接
+                        if (connectionState <= STATE_SCANNED) {
+                            BLEDevice device1=new BLEDevice();
+                            device1.setRssi(result.getRssi());
+                            device1.setDevice(result.getDevice());
+                            device1.setScanRecord(result.getScanRecord().getBytes());
+                            bleConnectListener.getAllScanDevice(device1);
+                            stopScan(false);
+                            startConn(result.getDevice());
+                        }
                     }
                 }
             };
@@ -381,13 +384,16 @@ public class BLEFramework {
                 @Override
                 public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
                     if (device!=null && !TextUtils.isEmpty(device.getName()) && iScanAndConnRule.rule(device)) {
-                        BLEDevice device1=new BLEDevice();
-                        device1.setRssi(rssi);
-                        device1.setDevice(device);
-                        device1.setScanRecord(scanRecord);
-                        bleConnectListener.getAllScanDevice(device1);
-                        stopScan(false);
-                        startConn(device);
+                        // 已经发生了连接
+                        if (connectionState <= STATE_SCANNED) {
+                            BLEDevice device1=new BLEDevice();
+                            device1.setRssi(rssi);
+                            device1.setDevice(device);
+                            device1.setScanRecord(scanRecord);
+                            bleConnectListener.getAllScanDevice(device1);
+                            stopScan(false);
+                            startConn(device);
+                        }
                     }
                 }
             };
