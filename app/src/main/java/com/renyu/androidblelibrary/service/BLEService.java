@@ -69,7 +69,6 @@ public class BLEService extends Service {
             @Override
             public void getCurrentState(int currentState) {
                 Log.d("BLEService", "currentState:" + currentState);
-
                 BLEConnectModel model=new BLEConnectModel();
                 model.setBleState(currentState);
                 EventBus.getDefault().post(model);
@@ -134,7 +133,7 @@ public class BLEService extends Service {
                 });
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.WRITE)) {
-                bleFramework.addWriteCommand(Params.UUID_SERVICE_MILI, Params.UUID_SERVICE_WRITE, intent.getByteArrayExtra(Params.BYTECODE));
+                bleFramework.addWriteCommand(Params.UUID_SERVICE, Params.UUID_SERVICE_WRITE, intent.getByteArrayExtra(Params.BYTECODE));
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.READ)) {
                 bleFramework.addReadCommand((UUID) intent.getSerializableExtra(Params.SERVICEUUID), (UUID) intent.getSerializableExtra(Params.CHARACUUID));

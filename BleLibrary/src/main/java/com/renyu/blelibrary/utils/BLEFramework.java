@@ -20,7 +20,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.cypress.cysmart.CommonUtils.Constants;
-import com.cypress.cysmart.DataModelClasses.CommonParams;
+import com.cypress.cysmart.DataModelClasses.OTAParams;
 import com.cypress.cysmart.OTAFirmwareUpdate.OTAService;
 import com.renyu.blelibrary.bean.BLEDevice;
 import com.renyu.blelibrary.impl.BLEConnectListener;
@@ -65,7 +65,7 @@ public class BLEFramework {
     // 搜索到的设备
     private HashMap<String, BLEDevice> tempsDevices;
     // 搜索所需时间
-    private int timeSeconds=10000;
+    private int timeSeconds=5000;
     // 搜索Handler
     private Handler handlerScan;
 
@@ -166,9 +166,9 @@ public class BLEFramework {
                 BLEFramework.this.gatt=gatt;
                 if (status==BluetoothGatt.GATT_SUCCESS) {
                     if (checkIsOTA()) {
-                        if (gatt.getService(CommonParams.UUID_SERVICE_OTASERVICE)!=null) {
-                            BluetoothGattCharacteristic characteristic = gatt.getService(CommonParams.UUID_SERVICE_OTASERVICE).getCharacteristic(CommonParams.UUID_SERVICE_OTA);
-                            if (enableNotification(characteristic, gatt, CommonParams.UUID_DESCRIPTOR_OTA)) {
+                        if (gatt.getService(OTAParams.UUID_SERVICE_OTASERVICE)!=null) {
+                            BluetoothGattCharacteristic characteristic = gatt.getService(OTAParams.UUID_SERVICE_OTASERVICE).getCharacteristic(OTAParams.UUID_SERVICE_OTA);
+                            if (enableNotification(characteristic, gatt, OTAParams.UUID_DESCRIPTOR_OTA)) {
                                 mOTACharacteristic = characteristic;
                                 setConnectionState(STATE_SERVICES_OTA_DISCOVERED);
                                 return;
@@ -177,11 +177,15 @@ public class BLEFramework {
                     }
                     else {
                         for (BluetoothGattService bluetoothGattService : gatt.getServices()) {
+                            System.out.println("bluetoothGattService:  "+bluetoothGattService.getUuid().toString());
                             for (BluetoothGattCharacteristic bluetoothGattCharacteristic : bluetoothGattService.getCharacteristics()) {
+                                System.out.println("bluetoothGattCharacteristic:  "+bluetoothGattCharacteristic.getUuid().toString());
                                 for (BluetoothGattDescriptor bluetoothGattDescriptor : bluetoothGattCharacteristic.getDescriptors()) {
+                                    System.out.println("bluetoothGattDescriptor:  "+bluetoothGattDescriptor.getUuid().toString());
                                     enableNotification(bluetoothGattCharacteristic, gatt, bluetoothGattDescriptor.getUuid());
                                 }
                             }
+                            System.out.println("\n");
                         }
                         // 连接通知服务完成
                         setConnectionState(STATE_SERVICES_DISCOVERED);
@@ -233,8 +237,8 @@ public class BLEFramework {
                 super.onCharacteristicChanged(gatt, characteristic);
 
                 //ota的指令
-                if (CommonParams.UUID_SERVICE_OTA.toString().equals(characteristic.getUuid().toString())) {
-                    Intent intentOTA = new Intent(CommonParams.ACTION_OTA_DATA_AVAILABLE);
+                if (OTAParams.UUID_SERVICE_OTA.toString().equals(characteristic.getUuid().toString())) {
+                    Intent intentOTA = new Intent(OTAParams.ACTION_OTA_DATA_AVAILABLE);
                     Bundle mBundle = new Bundle();
                     mBundle.putByteArray(Constants.EXTRA_BYTE_VALUE, characteristic.getValue());
                     mBundle.putString(Constants.EXTRA_BYTE_UUID_VALUE, characteristic.getUuid().toString());

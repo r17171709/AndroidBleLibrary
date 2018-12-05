@@ -6,7 +6,7 @@ import java.util.UUID;
  * Created by renyu on 2017/1/12.
  */
 
-public class CommonParams {
+public class OTAParams {
     //ota UUID
     public static final UUID UUID_SERVICE_OTASERVICE=UUID.fromString("00060000-F8CE-11E4-ABF4-0002A5D5C51B");
     public static final UUID UUID_SERVICE_OTA=UUID.fromString("00060001-F8CE-11E4-ABF4-0002A5D5C51B");

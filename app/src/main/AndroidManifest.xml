@@ -9,15 +9,17 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".activity.MainActivity">
+        <activity android:name=".activity.Main2Activity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".service.BLEService"></service>
-        <service android:name="com.cypress.cysmart.OTAFirmwareUpdate.OTAService"></service>
+
+        <service android:name=".service.BLEService" />
+        <service android:name=".service.BLEService2" />
+        <service android:name="com.cypress.cysmart.OTAFirmwareUpdate.OTAService" />
     </application>
 
 </manifest>

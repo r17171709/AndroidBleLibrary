@@ -17,7 +17,7 @@ import android.util.Log;
 import com.cypress.cysmart.CommonUtils.Constants;
 import com.cypress.cysmart.CommonUtils.GattAttributes;
 import com.cypress.cysmart.CommonUtils.Utils;
-import com.cypress.cysmart.DataModelClasses.CommonParams;
+import com.cypress.cysmart.DataModelClasses.OTAParams;
 import com.cypress.cysmart.DataModelClasses.OTAFlashRowModel;
 import com.renyu.blelibrary.utils.BLEFramework;
 
@@ -237,7 +237,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
 
                     }
                     else if(sharedPrefStatus.equalsIgnoreCase("" + BootLoaderCommands.EXIT_BOOTLOADER)){
-                        CommonParams.mFileupgradeStarted = false;
+                        OTAParams.mFileupgradeStarted = false;
                         saveDeviceAddress();
                         Log.d("BLEService", "ota固件升级成功");
                         if (secondFileUpdatedNeeded()) {
@@ -251,7 +251,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
 
                             BLEFramework.getBleFrameworkInstance().updateOTAProgress(101);
                         }
-                        CommonParams.mFileupgradeStarted = false;
+                        OTAParams.mFileupgradeStarted = false;
                         BLEFramework.getBleFrameworkInstance().close();
                         stopSelf();
                     }
@@ -440,7 +440,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
     private void onOtaExitBootloaderComplete(int status) {
         Bundle bundle = new Bundle();
         bundle.putByteArray(Constants.EXTRA_BYTE_VALUE, new byte[]{(byte)status});
-        Intent intentOTA = new Intent(CommonParams.ACTION_OTA_DATA_AVAILABLE);
+        Intent intentOTA = new Intent(OTAParams.ACTION_OTA_DATA_AVAILABLE);
         intentOTA.putExtras(bundle);
         OTAService.this.sendBroadcast(intentOTA);
     }
@@ -471,7 +471,7 @@ public class OTAService extends Service implements FileReadStatusUpdater {
         if (this.mTotalLines == fileLine && mOTACharacteristic != null) {
             Log.d("BLEService", "文件读取成功");
             Utils.setStringSharedPreference(OTAService.this, Constants.PREF_BOOTLOADER_STATE, "56");
-            CommonParams.mFileupgradeStarted = true;
+            OTAParams.mFileupgradeStarted = true;
             otaFirmwareWrite.OTAEnterBootLoaderCmd(mCheckSumType);
             Log.d("BLEService", "执行进入bootloader方法");
         }

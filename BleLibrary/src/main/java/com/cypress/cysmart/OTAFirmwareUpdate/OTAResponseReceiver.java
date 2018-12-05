@@ -8,7 +8,7 @@ import android.util.Log;
 
 import com.cypress.cysmart.CommonUtils.Constants;
 import com.cypress.cysmart.CommonUtils.Utils;
-import com.cypress.cysmart.DataModelClasses.CommonParams;
+import com.cypress.cysmart.DataModelClasses.OTAParams;
 
 public class OTAResponseReceiver extends BroadcastReceiver {
     private static final int CASE_ABORT = 15;
@@ -64,7 +64,7 @@ public class OTAResponseReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         this.mContext = context;
-        if (CommonParams.ACTION_OTA_DATA_AVAILABLE.equals(action)) {
+        if (OTAParams.ACTION_OTA_DATA_AVAILABLE.equals(action)) {
             String hexValue = Utils.ByteArraytoHex(intent.getByteArrayExtra(Constants.EXTRA_BYTE_VALUE));
             if (Utils.getStringSharedPreference(this.mContext, Constants.PREF_BOOTLOADER_STATE).equalsIgnoreCase("56")) {
                 parseEnterBootLoaderAcknowledgement(hexValue);
