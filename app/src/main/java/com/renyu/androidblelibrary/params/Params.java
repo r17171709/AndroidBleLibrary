@@ -11,8 +11,6 @@ public class Params {
     //服务 UUID
     // 牙刷
     public static final UUID UUID_SERVICE=UUID.fromString("E53A96FD-BC51-4A3A-A397-4B759661B7CF");
-    // 设备精灵 OTA使用
-//    public static final UUID UUID_SERVICE=UUID.fromString("0a2be667-2416-4373-b583-1147d905e39f");
     public static final UUID UUID_SERVICE_WRITE=UUID.fromString("0000cdd2-0000-1000-8000-00805f9b34fb");
     //电池服务 UUID
     public static final UUID UUID_SERVICE_BATTERY=UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb");
@@ -23,6 +21,8 @@ public class Params {
     public static final UUID UUID_SERVICE_DEVICEINFO_ID=UUID.fromString("00002a25-0000-1000-8000-00805f9b34fb");
     public static final UUID UUID_SERVICE_DEVICEINFO_VERSION=UUID.fromString("00002a26-0000-1000-8000-00805f9b34fb");
     public static final UUID UUID_SERVICE_DEVICEINFO_CPUID=UUID.fromString("00002a27-0000-1000-8000-00805f9b34fb");
+    // OTA使用
+    public static final UUID UUID_SERVICE_OTA=UUID.fromString("0a2be667-2416-4373-b583-1147d905e39f");
 
     /**
      * bluetoothGattService:00001800-0000-1000-8000-00805f9b34fb
@@ -188,6 +188,4 @@ public class Params {
 
     public static final UUID UUID_SERVICE_WristBand_SET=UUID.fromString("0000ef17-0000-1000-8000-00805f9b34fb");
     public static final UUID UUID_SERVICE_WristBand_SETWrite=UUID.fromString("000007d3-0000-1000-8000-00805f9b34fb");
-
-
 }

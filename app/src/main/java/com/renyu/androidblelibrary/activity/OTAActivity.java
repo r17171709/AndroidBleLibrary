@@ -40,7 +40,7 @@ public class OTAActivity extends AppCompatActivity {
                     new Handler().postDelayed(new Runnable() {
                         @Override
                         public void run() {
-                            DataUtils.enterOta(bleFramework, Params.UUID_SERVICE, Params.UUID_SERVICE_WRITE);
+                            DataUtils.enterOta(bleFramework, Params.UUID_SERVICE_OTA, Params.UUID_SERVICE_WRITE);
                         }
                     }, 1000);
                 }
