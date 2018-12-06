@@ -436,7 +436,7 @@ public class BLEService2 extends Service {
     public static void enterOta(Context context) {
         byte[] bytes = new byte[1];
         bytes[0] = (byte) 0xa7;
-        sendWriteCommand(Params.UUID_SERVICE_OTA, Params.UUID_SERVICE_WRITE, bytes, context);
+        sendWriteCommand(Params.UUID_SERVICE_OTA, Params.UUID_SERVICE_OTA_WRITE, bytes, context);
     }
 
     /**

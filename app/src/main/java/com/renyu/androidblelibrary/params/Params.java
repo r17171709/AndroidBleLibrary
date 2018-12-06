@@ -23,6 +23,7 @@ public class Params {
     public static final UUID UUID_SERVICE_DEVICEINFO_CPUID=UUID.fromString("00002a27-0000-1000-8000-00805f9b34fb");
     // OTA使用
     public static final UUID UUID_SERVICE_OTA=UUID.fromString("0a2be667-2416-4373-b583-1147d905e39f");
+    public static final UUID UUID_SERVICE_OTA_WRITE=UUID.fromString("0000cdd2-0000-1000-8000-00805f9b34fb");
 
     /**
      * bluetoothGattService:00001800-0000-1000-8000-00805f9b34fb
