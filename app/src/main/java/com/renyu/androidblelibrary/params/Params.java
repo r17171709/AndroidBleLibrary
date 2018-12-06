@@ -186,5 +186,10 @@ public class Params {
     public static final UUID UUID_SERVICE_WristBand_Code=UUID.fromString("0000246f-0000-1000-8000-00805f9b34fb");
 
     public static final UUID UUID_SERVICE_WristBand_Data=UUID.fromString("0000606f-0000-1000-8000-00805f9b34fb");
-    public static final UUID UUID_SERVICE_WristBand_Command=UUID.fromString("0000ad1d-0000-1000-8000-00805f9b34fb");
+    public static final UUID UUID_SERVICE_WristBand_DataWrite=UUID.fromString("0000ad1d-0000-1000-8000-00805f9b34fb");
+
+    public static final UUID UUID_SERVICE_WristBand_SET=UUID.fromString("0000ef17-0000-1000-8000-00805f9b34fb");
+    public static final UUID UUID_SERVICE_WristBand_SETWrite=UUID.fromString("000007d3-0000-1000-8000-00805f9b34fb");
+
+
 }

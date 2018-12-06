@@ -24,6 +24,7 @@ import com.renyu.blelibrary.impl.BLEStateChangeListener;
 import com.renyu.blelibrary.impl.BLEWriteResponseListener;
 import com.renyu.blelibrary.impl.IScanAndConnRule;
 import com.renyu.blelibrary.utils.BLEFramework;
+import com.renyu.blelibrary.utils.HexUtil;
 
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONException;
@@ -54,9 +55,9 @@ public class BLEService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        receiverCommandMaps=new HashMap<>();
+        receiverCommandMaps = new HashMap<>();
 
-        bleFramework=BLEFramework.getBleFrameworkInstance();
+        bleFramework = BLEFramework.getBleFrameworkInstance();
         bleFramework.setParams(this.getApplicationContext());
         bleFramework.setBleConnectListener(new BLEConnectListener() {
             @Override
@@ -69,7 +70,7 @@ public class BLEService extends Service {
             @Override
             public void getCurrentState(int currentState) {
                 Log.d("BLEService", "currentState:" + currentState);
-                BLEConnectModel model=new BLEConnectModel();
+                BLEConnectModel model = new BLEConnectModel();
                 model.setBleState(currentState);
                 EventBus.getDefault().post(model);
             }
@@ -109,7 +110,7 @@ public class BLEService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent!=null && intent.getStringExtra(Params.COMMAND)!=null) {
+        if (intent != null && intent.getStringExtra(Params.COMMAND) != null) {
             if (intent.getStringExtra(Params.COMMAND).equals(Params.SCAN)) {
                 bleFramework.startScan();
             }
@@ -151,15 +152,16 @@ public class BLEService extends Service {
 
     /**
      * 发送写指令
+     *
      * @param command
      * @param params
      * @param context
      */
     public static void sendWriteCommand(int command, HashMap<String, String> params, Context context) {
-        String values=getBLECommand(command, params);
+        String values = getBLECommand(command, params);
         byte[][] bytes_send = getDivided_data(values, command);
         for (byte[] bytes : bytes_send) {
-            Intent intent=new Intent(context, BLEService.class);
+            Intent intent = new Intent(context, BLEService.class);
             intent.putExtra(Params.COMMAND, Params.WRITE);
             intent.putExtra(Params.BYTECODE, bytes);
             context.startService(intent);
@@ -168,12 +170,13 @@ public class BLEService extends Service {
 
     /**
      * 发送读指令
+     *
      * @param serviceUUID
      * @param CharacUUID
      * @param context
      */
     public static void sendReadCommand(final UUID serviceUUID, final UUID CharacUUID, Context context) {
-        Intent intent=new Intent(context, BLEService.class);
+        Intent intent = new Intent(context, BLEService.class);
         intent.putExtra(Params.COMMAND, Params.READ);
         intent.putExtra(Params.SERVICEUUID, serviceUUID);
         intent.putExtra(Params.CHARACUUID, CharacUUID);
@@ -182,11 +185,12 @@ public class BLEService extends Service {
 
     /**
      * 连接设备
+     *
      * @param bluetoothDevice
      * @param context
      */
     public static void conn(BluetoothDevice bluetoothDevice, Context context) {
-        Intent intent=new Intent(context, BLEService.class);
+        Intent intent = new Intent(context, BLEService.class);
         intent.putExtra(Params.COMMAND, Params.CONN);
         intent.putExtra(Params.DEVICE, bluetoothDevice);
         context.startService(intent);
@@ -194,30 +198,33 @@ public class BLEService extends Service {
 
     /**
      * 断开连接
+     *
      * @param context
      */
     public static void disconn(Context context) {
-        Intent intent=new Intent(context, BLEService.class);
+        Intent intent = new Intent(context, BLEService.class);
         intent.putExtra(Params.COMMAND, Params.DISCONN);
         context.startService(intent);
     }
 
     /**
      * 扫描设备
+     *
      * @param context
      */
     public static void scan(Context context) {
-        Intent intent=new Intent(context, BLEService.class);
+        Intent intent = new Intent(context, BLEService.class);
         intent.putExtra(Params.COMMAND, Params.SCAN);
         context.startService(intent);
     }
 
     /**
      * 扫描并连接指定设备
+     *
      * @param context
      */
     public static void scanAndConn(Context context, String deviceName) {
-        Intent intent=new Intent(context, BLEService.class);
+        Intent intent = new Intent(context, BLEService.class);
         intent.putExtra(Params.COMMAND, Params.SCANCONN);
         intent.putExtra(Params.DEVICE, deviceName);
         context.startService(intent);
@@ -225,21 +232,23 @@ public class BLEService extends Service {
 
     /**
      * 读取RSSI
+     *
      * @param context
      */
     public static void readRSSI(Context context) {
-        Intent intent=new Intent(context, BLEService.class);
+        Intent intent = new Intent(context, BLEService.class);
         intent.putExtra(Params.COMMAND, Params.RSSI);
         context.startService(intent);
     }
 
     /**
      * ota升级
+     *
      * @param context
      * @param filePath
      */
     public static void ota(Context context, String filePath) {
-        Intent intent=new Intent(context, BLEService.class);
+        Intent intent = new Intent(context, BLEService.class);
         intent.putExtra(Params.COMMAND, Params.OTA);
         intent.putExtra("filePath", filePath);
         context.startService(intent);
@@ -247,37 +256,38 @@ public class BLEService extends Service {
 
     /**
      * 获取设备连接状态
+     *
      * @return
      */
     public static BLEConnectModel getBLEConnectModel() {
-        BLEConnectModel bleConnectModel=new BLEConnectModel();
+        BLEConnectModel bleConnectModel = new BLEConnectModel();
         bleConnectModel.setBleState(BLEFramework.getBleFrameworkInstance().getConnectionState());
         return bleConnectModel;
     }
 
     /**
      * 指令封装
+     *
      * @param command
      * @param params
      * @return
      */
     private static String getBLECommand(int command, HashMap<String, String> params) {
         try {
-            JSONObject object=new JSONObject();
+            JSONObject object = new JSONObject();
             object.put("command", command);
-            JSONObject param=new JSONObject();
-            if (params!=null && params.size()>0) {
-                Iterator<Map.Entry<String, String>> iterator=params.entrySet().iterator();
+            JSONObject param = new JSONObject();
+            if (params != null && params.size() > 0) {
+                Iterator<Map.Entry<String, String>> iterator = params.entrySet().iterator();
                 while (iterator.hasNext()) {
-                    Map.Entry<String, String> entry=iterator.next();
+                    Map.Entry<String, String> entry = iterator.next();
                     try {
                         param.put(entry.getKey(), Integer.parseInt(entry.getValue()));
                     } catch (NumberFormatException e) {
                         param.put(entry.getKey(), entry.getValue());
                     }
                 }
-            }
-            else {
+            } else {
                 param.put("NULL", "NULL");
             }
             object.put("param", param);
@@ -291,40 +301,33 @@ public class BLEService extends Service {
 
     private static byte[][] getDivided_data(String json_str, int command) {
         byte[] bytes = json_str.getBytes();
-        int total=bytes.length%PACKET_PAYLOAD==0?bytes.length/PACKET_PAYLOAD:bytes.length/PACKET_PAYLOAD+1;
+        int total = bytes.length % PACKET_PAYLOAD == 0 ? bytes.length / PACKET_PAYLOAD : bytes.length / PACKET_PAYLOAD + 1;
         byte[][] divided_byte = new byte[total][];
-        for (int i=0;i<total;i++) {
-            if (total-1!=i) {
-                divided_byte[i]=new byte[PACKET_LENGTH];
-                for (int j=0;j<PACKET_LENGTH;j++) {
-                    if (j==0) {
-                        divided_byte[i][0]= (byte) (i+1);
-                    }
-                    else if (j==1) {
-                        divided_byte[i][1]= (byte) total;
-                    }
-                    else if (j==2) {
-                        divided_byte[i][2]= (byte) command;
-                    }
-                    else {
-                        divided_byte[i][j]= bytes[(i*PACKET_PAYLOAD+(j-3))];
+        for (int i = 0; i < total; i++) {
+            if (total - 1 != i) {
+                divided_byte[i] = new byte[PACKET_LENGTH];
+                for (int j = 0; j < PACKET_LENGTH; j++) {
+                    if (j == 0) {
+                        divided_byte[i][0] = (byte) (i + 1);
+                    } else if (j == 1) {
+                        divided_byte[i][1] = (byte) total;
+                    } else if (j == 2) {
+                        divided_byte[i][2] = (byte) command;
+                    } else {
+                        divided_byte[i][j] = bytes[(i * PACKET_PAYLOAD + (j - 3))];
                     }
                 }
-            }
-            else {
-                divided_byte[i]=new byte[bytes.length-PACKET_PAYLOAD*(total-1)+3];
-                for (int j=0;j<(bytes.length-PACKET_PAYLOAD*(total-1)+3);j++) {
-                    if (j==0) {
-                        divided_byte[i][0]= (byte) (i+1);
-                    }
-                    else if (j==1) {
-                        divided_byte[i][1]= (byte) total;
-                    }
-                    else if (j==2) {
-                        divided_byte[i][2]= (byte) command;
-                    }
-                    else {
-                        divided_byte[i][j]= bytes[(i*PACKET_PAYLOAD+(j-3))];
+            } else {
+                divided_byte[i] = new byte[bytes.length - PACKET_PAYLOAD * (total - 1) + 3];
+                for (int j = 0; j < (bytes.length - PACKET_PAYLOAD * (total - 1) + 3); j++) {
+                    if (j == 0) {
+                        divided_byte[i][0] = (byte) (i + 1);
+                    } else if (j == 1) {
+                        divided_byte[i][1] = (byte) total;
+                    } else if (j == 2) {
+                        divided_byte[i][2] = (byte) command;
+                    } else {
+                        divided_byte[i][j] = bytes[(i * PACKET_PAYLOAD + (j - 3))];
                     }
                 }
             }
@@ -334,58 +337,59 @@ public class BLEService extends Service {
 
     private static String getOrigin_str(byte[][] byte_str) {
         String origin_str;
-        int number=0;
-        for (int i=0;i<byte_str.length;i++) {
-            for (int j=3;j<byte_str[i].length;j++) {
-                if (byte_str[i][j]!=0) {
-                    number+=1;
+        int number = 0;
+        for (int i = 0; i < byte_str.length; i++) {
+            for (int j = 3; j < byte_str[i].length; j++) {
+                if (byte_str[i][j] != 0) {
+                    number += 1;
                 }
             }
         }
-        byte[] bytes=new byte[number];
-        int index=0;
-        for (int i=0;i<byte_str.length;i++) {
-            for (int j=3;j<byte_str[i].length;j++) {
-                if (byte_str[i][j]!=0) {
-                    bytes[index]=byte_str[i][j];
+        byte[] bytes = new byte[number];
+        int index = 0;
+        for (int i = 0; i < byte_str.length; i++) {
+            for (int j = 3; j < byte_str[i].length; j++) {
+                if (byte_str[i][j] != 0) {
+                    bytes[index] = byte_str[i][j];
                     index++;
                 }
             }
         }
         try {
-            origin_str=new String(bytes, "utf-8");
+            origin_str = new String(bytes, "utf-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
-            origin_str="";
+            origin_str = "";
         }
         return origin_str;
     }
 
     /**
      * 解析写指令
+     *
      * @param bytes
      */
     private static synchronized void putCommand(byte[] bytes) {
-        int command= com.renyu.blelibrary.utils.Utils.convert2To10(com.renyu.blelibrary.utils.Utils.sign2nosign(bytes[2]));
+        int command = HexUtil.convert2To10(HexUtil.sign2nosign(bytes[2]));
         //最后一条数据
-        if (bytes[0]==bytes[1]) {
+        if (bytes[0] == bytes[1]) {
             //判断指令是否在集合中，如果不在则忽略本条指令
-            if (receiverCommandMaps.containsKey(""+command)) {
-                LinkedList<byte[]> list=receiverCommandMaps.get(""+command);
+            if (receiverCommandMaps.containsKey("" + command)) {
+                LinkedList<byte[]> list = receiverCommandMaps.get("" + command);
                 list.add(bytes);
                 //如果集合中数量跟指令条数一直，则进一步判断，否则则忽略本条指令
-                if (list.size()==bytes[1]) {
-                    byte[][] bytes1=new byte[list.size()][];
-                    for (int i=0;i<bytes1.length;i++) {
-                        bytes1[i]=list.get(i);
+                if (list.size() == bytes[1]) {
+                    byte[][] bytes1 = new byte[list.size()][];
+                    for (int i = 0; i < bytes1.length; i++) {
+                        bytes1[i] = list.get(i);
                     }
-                    String result=getOrigin_str(bytes1);
+                    String result = getOrigin_str(bytes1);
                     //符合json数据格式，则认为是有效指令，并将其转发
                     try {
                         // 测试指令是否正常
                         new JSONObject(result);
 
-                        BLECommandModel model=new BLECommandModel();
+                        BLECommandModel model = new BLECommandModel();
                         model.setCommand(command);
                         model.setValue(result);
                         EventBus.getDefault().post(model);
@@ -394,48 +398,43 @@ public class BLEService extends Service {
                         Log.d("BLEService", "指令错误");
                     } finally {
                         //清除指令
-                        receiverCommandMaps.remove(""+command);
+                        receiverCommandMaps.remove("" + command);
                     }
                 }
             }
-        }
-        else {
+        } else {
             LinkedList<byte[]> list;
-            if (receiverCommandMaps.containsKey(""+command)) {
-                list=receiverCommandMaps.get(""+command);
-            }
-            else {
-                list=new LinkedList<>();
+            if (receiverCommandMaps.containsKey("" + command)) {
+                list = receiverCommandMaps.get("" + command);
+            } else {
+                list = new LinkedList<>();
             }
             list.add(bytes);
-            receiverCommandMaps.put(""+command, list);
+            receiverCommandMaps.put("" + command, list);
         }
     }
 
     /**
      * 解析特定的读指令
+     *
      * @param bytes
      * @param uuid
      */
     public void putReadCommand(UUID uuid, byte[] bytes) {
-        BLECommandModel model=new BLECommandModel();
+        BLECommandModel model = new BLECommandModel();
         if (uuid.toString().equals(Params.UUID_SERVICE_BATTERY_READ.toString())) {
             model.setCommand(Params.BLE_COMMAND_BATTERY);
-            model.setValue(""+bytes[0]);
-        }
-        else if (uuid.toString().equals(Params.UUID_SERVICE_DEVICEINFO_NAME.toString())) {
+            model.setValue("" + bytes[0]);
+        } else if (uuid.toString().equals(Params.UUID_SERVICE_DEVICEINFO_NAME.toString())) {
             model.setCommand(Params.BLE_COMMAND_INFONAME);
             model.setValue(new String(bytes));
-        }
-        else if (uuid.toString().equals(Params.UUID_SERVICE_DEVICEINFO_ID.toString())) {
+        } else if (uuid.toString().equals(Params.UUID_SERVICE_DEVICEINFO_ID.toString())) {
             model.setCommand(Params.BLE_COMMAND_INFOID);
             model.setValue(new String(bytes));
-        }
-        else if (uuid.toString().equals(Params.UUID_SERVICE_DEVICEINFO_VERSION.toString())) {
+        } else if (uuid.toString().equals(Params.UUID_SERVICE_DEVICEINFO_VERSION.toString())) {
             model.setCommand(Params.BLE_COMMAND_INFOVERSION);
             model.setValue(new String(bytes));
-        }
-        else if (uuid.toString().equals(Params.UUID_SERVICE_DEVICEINFO_CPUID.toString())) {
+        } else if (uuid.toString().equals(Params.UUID_SERVICE_DEVICEINFO_CPUID.toString())) {
             model.setCommand(Params.BLE_COMMAND_CPUID);
             model.setValue(new String(bytes));
         }
