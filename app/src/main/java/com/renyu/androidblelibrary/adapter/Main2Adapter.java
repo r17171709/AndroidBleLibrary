@@ -41,22 +41,22 @@ public class Main2Adapter extends RecyclerView.Adapter<Main2Adapter.MainViewHold
             @Override
             public void onClick(View view) {
                 if (holder.getLayoutPosition()==0) {
-                    BLEService2.verifyUID("654321");
+                    BLEService2.verifyUID("654321", holder.itemView.getContext());
                 }
                 else if (holder.getLayoutPosition()==1) {
-                    BLEService2.verifyCode("8888");
+                    BLEService2.verifyCode("8888", holder.itemView.getContext());
                 }
                 else if (holder.getLayoutPosition()==2) {
-                    BLEService2.hourTotalStep();
+                    BLEService2.hourTotalStep(holder.itemView.getContext());
                 }
                 else if (holder.getLayoutPosition()==3) {
-                    BLEService2.setTime();
+                    BLEService2.setTime(holder.itemView.getContext());
                 }
                 else if (holder.getLayoutPosition()==4) {
-                    BLEService2.readEBC();
+                    BLEService2.readEBC(holder.itemView.getContext());
                 }
                 else if (holder.getLayoutPosition()==5) {
-                    BLEService2.setEBC(1, 0, 2, 0, 3, 0, 0, 0, 0, 0, 400);
+                    BLEService2.setEBC(1, 0, 2, 0, 3, 0, 0, 0, 0, 0, 400, holder.itemView.getContext());
                 }
             }
         });

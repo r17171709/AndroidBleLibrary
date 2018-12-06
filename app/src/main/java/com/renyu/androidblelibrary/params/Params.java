@@ -154,6 +154,8 @@ public class Params {
 
     public static final int RESULT_ENABLE_BT = 101;
 
+    public final static String SERVICEUUID="SERVICEUUID";
+    public final static String CHARACUUID="CHARACUUID";
     public final static String COMMAND="command";
     // 扫描指令
     public final static String SCAN="SCAN";
@@ -167,10 +169,6 @@ public class Params {
     public final static String WRITE="WRITE";
     // 读指令
     public final static String READ="READ";
-    // 读指令服务UUID
-    public final static String SERVICEUUID="SERVICEUUID";
-    // 读指令特征UUID
-    public final static String CHARACUUID="CHARACUUID";
     // RSSI指令
     public final static String RSSI="RSSI";
     // 断开连接指令

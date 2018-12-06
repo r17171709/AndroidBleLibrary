@@ -14,12 +14,10 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.renyu.androidblelibrary.bean.BLEConnectModel;
 import com.renyu.androidblelibrary.params.Params;
 import com.renyu.androidblelibrary.utils.AESCBCNoPadding;
-import com.renyu.androidblelibrary.utils.DataUtils;
 import com.renyu.blelibrary.bean.BLEDevice;
 import com.renyu.blelibrary.impl.BLEConnectListener;
 import com.renyu.blelibrary.impl.BLEOTAListener;
@@ -76,8 +74,7 @@ public class BLEService2 extends Service {
                 // 验证UID
                 if ((int) value[0] == 0x01) {
                     Log.d("BLEService2", "验证码正确");
-                }
-                else if ((int) value[0] == 0x02) {
+                } else if ((int) value[0] == 0x02) {
                     Log.d("BLEService2", "验证码错误");
                 }
                 // 验证码输入正确
@@ -152,14 +149,11 @@ public class BLEService2 extends Service {
                     int intensity = (int) value[3];
                     if (intensity == 0x01) {
                         intensityDesp = "差";
-                    }
-                    else if (intensity == 0x03) {
+                    } else if (intensity == 0x03) {
                         intensityDesp = "低";
-                    }
-                    else if (intensity == 0x07) {
+                    } else if (intensity == 0x07) {
                         intensityDesp = "中";
-                    }
-                    else if (intensity == 0x0F) {
+                    } else if (intensity == 0x0F) {
                         intensityDesp = "高";
                     }
 
@@ -193,7 +187,7 @@ public class BLEService2 extends Service {
                     Log.d("BLEService2", "ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " totalStep:" + totalStep);
 
                     if (value[0] == (byte) 0x82) {
-                        hourTotalStep();
+//                        hourTotalStep();
                     }
                 }
                 // 读取每小时的步数,表示没有数据了，后面Byte[1]-[16]无效
@@ -260,10 +254,13 @@ public class BLEService2 extends Service {
                 });
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.WRITE)) {
-                bleFramework.addWriteCommand(Params.UUID_SERVICE, Params.UUID_SERVICE_WRITE, intent.getByteArrayExtra(Params.BYTECODE));
+                bleFramework.addWriteCommand((UUID) intent.getSerializableExtra(Params.SERVICEUUID),
+                        (UUID) intent.getSerializableExtra(Params.CHARACUUID),
+                        intent.getByteArrayExtra(Params.BYTECODE));
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.READ)) {
-                bleFramework.addReadCommand((UUID) intent.getSerializableExtra(Params.SERVICEUUID), (UUID) intent.getSerializableExtra(Params.CHARACUUID));
+                bleFramework.addReadCommand((UUID) intent.getSerializableExtra(Params.SERVICEUUID),
+                        (UUID) intent.getSerializableExtra(Params.CHARACUUID));
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.RSSI)) {
                 bleFramework.readRSSI();
@@ -320,16 +317,45 @@ public class BLEService2 extends Service {
 
     /**
      * 发送写指令
+     *
+     * @param serviceUUID
+     * @param CharacUUID
+     * @param bytes
+     * @param context
      */
-    public static void sendWriteCommand() {
+    public static void sendWriteCommand(UUID serviceUUID, UUID CharacUUID, byte[] bytes, Context context) {
+        Intent intent = new Intent(context, BLEService2.class);
+        intent.putExtra(Params.COMMAND, Params.WRITE);
+        intent.putExtra(Params.SERVICEUUID, serviceUUID);
+        intent.putExtra(Params.CHARACUUID, CharacUUID);
+        intent.putExtra(Params.BYTECODE, bytes);
+        context.startService(intent);
+    }
 
+    public static void sendWriteCommand(UUID serviceUUID, UUID CharacUUID, byte byte_, Context context) {
+        byte[] bytes = new byte[1];
+        bytes[0] = byte_;
+        Intent intent = new Intent(context, BLEService2.class);
+        intent.putExtra(Params.COMMAND, Params.WRITE);
+        intent.putExtra(Params.SERVICEUUID, serviceUUID);
+        intent.putExtra(Params.CHARACUUID, CharacUUID);
+        intent.putExtra(Params.BYTECODE, bytes);
+        context.startService(intent);
     }
 
     /**
      * 发送读指令
+     *
+     * @param serviceUUID
+     * @param CharacUUID
+     * @param context
      */
-    public static void sendReadCommand() {
-
+    public static void sendReadCommand(final UUID serviceUUID, final UUID CharacUUID, Context context) {
+        Intent intent = new Intent(context, BLEService2.class);
+        intent.putExtra(Params.COMMAND, Params.READ);
+        intent.putExtra(Params.SERVICEUUID, serviceUUID);
+        intent.putExtra(Params.CHARACUUID, CharacUUID);
+        context.startService(intent);
     }
 
     /**
@@ -390,16 +416,6 @@ public class BLEService2 extends Service {
         context.startService(intent);
     }
 
-    /**
-     * ota升级
-     *
-     * @param context
-     */
-    public static void startOTA(Context context) {
-        Intent intent = new Intent(context, BLEService2.class);
-        intent.putExtra(Params.COMMAND, Params.OTA);
-        context.startService(intent);
-    }
 
     /**
      * 获取设备连接状态
@@ -412,8 +428,26 @@ public class BLEService2 extends Service {
         return bleConnectModel;
     }
 
-    public static void enterOta() {
-        DataUtils.enterOta(BLEFramework.getBleFrameworkInstance(), Params.UUID_SERVICE, Params.UUID_SERVICE_WRITE);
+    /**
+     * 进入OTA升级
+     *
+     * @param context
+     */
+    public static void enterOta(Context context) {
+        byte[] bytes = new byte[1];
+        bytes[0] = (byte) 0xa7;
+        sendWriteCommand(Params.UUID_SERVICE, Params.UUID_SERVICE_WRITE, bytes, context);
+    }
+
+    /**
+     * 开始OTA升级
+     *
+     * @param context
+     */
+    public static void startOTA(Context context) {
+        Intent intent = new Intent(context, BLEService2.class);
+        intent.putExtra(Params.COMMAND, Params.OTA);
+        context.startService(intent);
     }
 
     /**
@@ -421,7 +455,7 @@ public class BLEService2 extends Service {
      *
      * @param value
      */
-    public static void verifyUID(String value) {
+    public static void verifyUID(String value, Context context) {
         byte[] bytes = new byte[11];
         for (int i = 0; i < bytes.length; i++) {
             if (value.getBytes().length > i) {
@@ -430,7 +464,7 @@ public class BLEService2 extends Service {
                 bytes[i] = 0x00;
             }
         }
-        DataUtils.sendData(BLEFramework.getBleFrameworkInstance(), Params.UUID_SERVICE_WristBand_Verify, Params.UUID_SERVICE_WristBand_UID, bytes);
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Verify, Params.UUID_SERVICE_WristBand_UID, bytes, context);
     }
 
     /**
@@ -438,19 +472,19 @@ public class BLEService2 extends Service {
      *
      * @param value
      */
-    public static void verifyCode(String value) {
+    public static void verifyCode(String value, Context context) {
         byte[] bytes = new byte[4];
         for (int i = 0; i < value.length(); i++) {
             int num = Integer.parseInt(value.substring(i, i + 1));
             bytes[i] = (byte) num;
         }
-        DataUtils.sendData(BLEFramework.getBleFrameworkInstance(), Params.UUID_SERVICE_WristBand_Verify, Params.UUID_SERVICE_WristBand_Code, bytes);
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Verify, Params.UUID_SERVICE_WristBand_Code, bytes, context);
     }
 
     /**
      * 时间设置
      */
-    public static void setTime() {
+    public static void setTime(Context context) {
         Calendar calendar = Calendar.getInstance();
         byte[] bytes = new byte[17];
         bytes[0] = (byte) 0xC1;
@@ -474,18 +508,19 @@ public class BLEService2 extends Service {
         bytes[14] = (byte) 0;
         bytes[15] = (byte) 0;
         bytes[16] = (byte) 0x5A;
-        DataUtils.sendData(BLEFramework.getBleFrameworkInstance(), Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SETWrite, bytes);
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SETWrite, bytes, context);
     }
 
     /**
      * 读取EBC和消耗的药瓶量
      */
-    public static void readEBC() {
-        DataUtils.sendData(BLEFramework.getBleFrameworkInstance(), Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0xFF);
+    public static void readEBC(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0xFF, context);
     }
 
     /**
      * 写入EBC和药瓶
+     *
      * @param b1
      * @param b1_use
      * @param b2
@@ -498,7 +533,7 @@ public class BLEService2 extends Service {
      * @param b5_use
      * @param totalScore
      */
-    public static void setEBC(int b1, int b1_use, int b2, int b2_use, int b3, int b3_use, int b4, int b4_use, int b5, int b5_use, int totalScore) {
+    public static void setEBC(int b1, int b1_use, int b2, int b2_use, int b3, int b3_use, int b4, int b4_use, int b5, int b5_use, int totalScore, Context context) {
         byte[] bytes = new byte[17];
         bytes[0] = (byte) 0xC5;
         bytes[1] = (byte) 0xA5;
@@ -518,13 +553,13 @@ public class BLEService2 extends Service {
         bytes[14] = totalScoreTemp[0];
         bytes[15] = (byte) 0;
         bytes[16] = (byte) (bytes[1] | bytes[2] | bytes[4]);
-        DataUtils.sendData(BLEFramework.getBleFrameworkInstance(), Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SETWrite, bytes);
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SETWrite, bytes, context);
     }
 
     /**
      * 读取每小时的步数
      */
-    public static void hourTotalStep() {
-        DataUtils.sendData(BLEFramework.getBleFrameworkInstance(), Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x82);
+    public static void hourTotalStep(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x82, context);
     }
 }
