@@ -185,12 +185,43 @@ public class BLEService2 extends Service {
                     int totalStep = HexUtil.byte2ToInt(totalStepTemp);
 
                     Log.d("BLEService2", "ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " totalStep:" + totalStep);
-
-                    if (value[0] == (byte) 0x82) {
-//                        hourTotalStep();
-                    }
                 }
                 // 读取每小时的步数,表示没有数据了，后面Byte[1]-[16]无效
+                else if (value[0] == (byte) 0x00) {
+                    Log.d("BLEService2", "读取每小时的步数 没有数据了");
+                }
+                // 读取心率
+                else if (value[0] == (byte) 0x90) {
+                    int min = (int) value[1];
+                    int hour = (int) value[2];
+                    int rate = (int) value[3];
+                    int minMin = (int) value[4];
+                    int minHour = (int) value[5];
+                    int minRate = (int) value[6];
+                    int fastMin = (int) value[7];
+                    int fastHour = (int) value[8];
+                    int fastRate = (int) value[9];
+                }
+                // 睡眠时间，表示还有数据
+                // 睡眠时间，表示没有数据了，后面Byte[1]-[4]有效
+                else if (value[0] == (byte) 0xB1 || value[0] == (byte) 0xB0) {
+                    int time = (int) value[1];
+                    int min = (int) value[1];
+                    int hour = (int) value[2];
+                    int statue = (int) value[3];
+                    if (statue == 0x01) {
+                        // 入睡
+                    } else if (statue == 0x02) {
+                        // 浅睡
+                    } else if (statue == 0x03) {
+                        // 深睡
+                    } else if (statue == 0x04) {
+                        // 中途清醒
+                    } else if (statue == 0x05) {
+                        // 醒来
+                    }
+                }
+                // 睡眠时间，表示没有数据了，后面Byte[1]-[4]无效
                 else if (value[0] == (byte) 0x00) {
                     Log.d("BLEService2", "读取每小时的步数 没有数据了");
                 }
@@ -561,5 +592,26 @@ public class BLEService2 extends Service {
      */
     public static void hourTotalStep(Context context) {
         sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x82, context);
+    }
+
+    /**
+     * 读取的前几天步数数据统计（理论上7天）
+     */
+    public static void dayTotalStep(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x83, context);
+    }
+
+    /**
+     * 读取心率
+     */
+    public static void heartRate(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x90, context);
+    }
+
+    /**
+     * 睡眠时间
+     */
+    public static void sleepTime(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0xb1, context);
     }
 }

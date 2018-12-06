@@ -58,6 +58,15 @@ public class Main2Adapter extends RecyclerView.Adapter<Main2Adapter.MainViewHold
                 else if (holder.getLayoutPosition()==5) {
                     BLEService2.setEBC(1, 0, 2, 0, 3, 0, 0, 0, 0, 0, 400, holder.itemView.getContext());
                 }
+                else if (holder.getLayoutPosition()==6){
+                    BLEService2.dayTotalStep(holder.itemView.getContext());
+                }
+                else if (holder.getLayoutPosition()==7){
+                    BLEService2.heartRate(holder.itemView.getContext());
+                }
+                else if (holder.getLayoutPosition()==8){
+                    BLEService2.sleepTime(holder.itemView.getContext());
+                }
             }
         });
     }
