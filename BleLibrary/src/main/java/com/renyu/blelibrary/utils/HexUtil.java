@@ -157,6 +157,13 @@ public class HexUtil {
         return bytes[1] & 0xFF | (bytes[0] & 0xFF) << 8;
     }
 
+    public static int byte4ToInt(byte[] bytes) {
+        return bytes[3] & 0xFF |
+                (bytes[2] & 0xFF) << 8 |
+                (bytes[1] & 0xFF) << 16 |
+                (bytes[0] & 0xFF) << 24;
+    }
+
     public static byte[] intToByte(int num) {
         byte[] bytes = new byte[2];
         bytes[0] = (byte) ((num >> 8) & 0xff);
@@ -182,17 +189,19 @@ public class HexUtil {
 
     /**
      * 有符号转无符号
+     *
      * @param bytes
      */
     public static String sign2nosign(byte bytes) {
-        int result = bytes&0xff;
+        int result = bytes & 0xff;
 //        System.out.println("无符号数: \t"+result);
 //        System.out.println("2进制bit位: \t"+Integer.toBinaryString(result));
-        return ""+Integer.toBinaryString(result);
+        return "" + Integer.toBinaryString(result);
     }
 
     /**
      * 二进制转十进制
+     *
      * @param hex
      * @return
      */
@@ -202,6 +211,7 @@ public class HexUtil {
 
     /**
      * 十进制转十六进制
+     *
      * @param i
      * @return
      */

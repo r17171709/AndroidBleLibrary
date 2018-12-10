@@ -19,11 +19,13 @@ import com.renyu.androidblelibrary.bean.BLEConnectModel;
 import com.renyu.androidblelibrary.params.Params;
 import com.renyu.androidblelibrary.utils.AESCBCNoPadding;
 import com.renyu.blelibrary.bean.BLEDevice;
-import com.renyu.blelibrary.impl.BLEConnectListener;
+import com.renyu.blelibrary.bean.BLEErrorRequest;
 import com.renyu.blelibrary.impl.BLEOTAListener;
 import com.renyu.blelibrary.impl.BLERSSIListener;
 import com.renyu.blelibrary.impl.BLEReadResponseListener;
+import com.renyu.blelibrary.impl.BLEScanCallBackListener;
 import com.renyu.blelibrary.impl.BLEStateChangeListener;
+import com.renyu.blelibrary.impl.BLEWriteErrorListener;
 import com.renyu.blelibrary.impl.BLEWriteResponseListener;
 import com.renyu.blelibrary.impl.IScanAndConnRule;
 import com.renyu.blelibrary.utils.BLEFramework;
@@ -49,7 +51,7 @@ public class BLEService2 extends Service {
         bleFramework = BLEFramework.getBleFrameworkInstance();
         bleFramework.setParams(this.getApplicationContext());
         // 扫描设备回调
-        bleFramework.setBleConnectListener(new BLEConnectListener() {
+        bleFramework.setBleScanCallbackListener(new BLEScanCallBackListener() {
             @Override
             public void getAllScanDevice(BLEDevice bleDevice) {
                 Log.d("BLEService2", bleDevice.getDevice().getName() + " " + bleDevice.getDevice().getAddress());
@@ -71,26 +73,25 @@ public class BLEService2 extends Service {
             @Override
             public void getResponseValues(byte[] value) {
                 Log.d("BLEService2", "white:");
-                // 验证UID
-                if ((int) value[0] == 0x01) {
+                if ((int) value[0] == 0x00) {
                     Log.d("BLEService2", "验证码正确");
-                } else if ((int) value[0] == 0x02) {
+                } else if ((int) value[0] == 0x01) {
                     Log.d("BLEService2", "验证码错误");
-                }
-                // 验证码输入正确
-                else if ((int) value[0] == 0x03) {
+                } else if ((int) value[0] == 0x02) {
                     Log.d("BLEService2", "验证码输入正确");
-                }
-                // 验证码输入错误
-                else if ((int) value[0] == 0x04) {
+                } else if ((int) value[0] == 0x03) {
                     Log.d("BLEService2", "验证码输入错误");
-                }
-                // 设置时间成功
-                else if (value[0] == (byte) 0x40) {
+                } else if (value[0] == (byte) 0x40) {
                     Log.d("BLEService2", "设置时间成功");
+                } else if (value[0] == (byte) 0x41) {
+                    Log.d("BLEService2", "时间加密数据长度有问题");
+                } else if (value[0] == (byte) 0x42) {
+                    Log.d("BLEService2", "时间验证码错误");
+                } else if (value[0] == (byte) 0x43) {
+                    Log.d("BLEService2", "时间写入错误");
                 }
                 // 读取EBC和消耗的药瓶量
-                else if (value[0] == (byte) 0xFF) {
+                else if (value[0] == (byte) 0x9F) {
                     // 药品1的编号
                     int b1 = (int) value[1];
                     // 上次同步后，药品1的使用量
@@ -129,14 +130,71 @@ public class BLEService2 extends Service {
                             "药品5的编号" + b5 + ",上次同步后，药品5的使用量:" + b5_use + " " +
                             "上次同步后，产生的EBC:" + totalEBC + " 手环共产生的总积分:" + totalScore + " " +
                             "校验:" + isVerify);
-                }
-                // EBC写入成功
-                else if (value[0] == (byte) 0x50) {
+                } else if (value[0] == (byte) 0x4C) {
                     Log.d("BLEService2", "EBC写入成功");
+                } else if (value[0] == (byte) 0x4D) {
+                    Log.d("BLEService2", "EBC加密数据长度有问题");
+                } else if (value[0] == (byte) 0x4E) {
+                    Log.d("BLEService2", "EBC验证码错误");
+                } else if (value[0] == (byte) 0x4F) {
+                    Log.d("BLEService2", "EBC写入失败");
+                }
+                // 读取每小时的步数,表示还有数据
+                else if (value[0] == (byte) 0x80 || value[0] == (byte) 0x86 || value[0] == (byte) 0x85) {
+                    if (value[0] == (byte) 0x80) {
+                        Log.d("BLEService2", "读取每小时的步数");
+                    } else if (value[0] == (byte) 0x86 || value[0] == (byte) 0x85) {
+                        Log.d("BLEService2", "读取的前几天步数数据统计");
+                    }
+
+                    int time = (int) value[1];
+
+                    // 运动强度
+                    String intensityDesp = "";
+                    int intensity = (int) value[2];
+                    if (intensity == 0x01) {
+                        intensityDesp = "差";
+                    } else if (intensity == 0x03) {
+                        intensityDesp = "低";
+                    } else if (intensity == 0x07) {
+                        intensityDesp = "中";
+                    } else if (intensity == 0x0F) {
+                        intensityDesp = "高";
+                    }
+
+                    // 平均心率（开启实时心率有效，否则为0）
+                    int heartRate = (int) value[3];
+
+                    // 今天到现在时间为止产生的总的EBC
+                    int ebc = (int) value[4];
+
+                    // 今天到现在时间为止的距离（单位：十米）
+                    byte[] distanceTemp = new byte[2];
+                    distanceTemp[0] = value[6];
+                    distanceTemp[1] = value[5];
+                    int distance = HexUtil.byte2ToInt(distanceTemp);
+
+                    // 今天到现在时间为止消耗的卡路里（单位：千卡）
+                    byte[] calorieTemp = new byte[2];
+                    calorieTemp[0] = value[8];
+                    calorieTemp[1] = value[7];
+                    int calorie = HexUtil.byte2ToInt(calorieTemp);
+
+                    // 今天到现在时间为止运动时间（单位：分钟）
+                    byte[] exerciseTimeTemp = new byte[2];
+                    exerciseTimeTemp[0] = value[10];
+                    exerciseTimeTemp[1] = value[9];
+                    int exerciseTime = HexUtil.byte2ToInt(exerciseTimeTemp);
+
+                    // 今天到现在时间为止总步数
+                    byte[] totalStepTemp = new byte[]{value[16], value[15], value[14], value[13]};
+                    int totalStep = HexUtil.byte4ToInt(totalStepTemp);
+
+                    Log.d("BLEService2", "heartRate:" + heartRate + " ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " totalStep:" + totalStep);
                 }
                 // 读取每小时的步数,表示还有数据
                 // 读取每小时的步数,表示没有数据了，后面Byte[1]-[16]有效
-                else if (value[0] == (byte) 0x82 || value[0] == (byte) 0x80) {
+                else if (value[0] == (byte) 0x82 || value[0] == (byte) 0x81) {
                     byte[] temp = new byte[value.length - 1];
                     for (int i = 0; i < temp.length; i++) {
                         temp[i] = value[i + 1];
@@ -184,14 +242,12 @@ public class BLEService2 extends Service {
                     totalStepTemp[1] = value[11];
                     int totalStep = HexUtil.byte2ToInt(totalStepTemp);
 
-                    Log.d("BLEService2", "ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " totalStep:" + totalStep);
-                }
-                // 读取每小时的步数,表示没有数据了，后面Byte[1]-[16]无效
-                else if (value[0] == (byte) 0x00) {
+                    Log.d("BLEService2", "heartRate:" + heartRate + " ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " totalStep:" + totalStep);
+                } else if (value[0] == (byte) 0x83) {
                     Log.d("BLEService2", "读取每小时的步数 没有数据了");
-                }
-                // 读取心率
-                else if (value[0] == (byte) 0x90) {
+                } else if (value[0] == (byte) 0x87) {
+                    Log.d("BLEService2", "读取的前几天步数数据统计 没有数据了");
+                } else if (value[0] == (byte) 0x88) {
                     int min = (int) value[1];
                     int hour = (int) value[2];
                     int rate = (int) value[3];
@@ -201,29 +257,33 @@ public class BLEService2 extends Service {
                     int fastMin = (int) value[7];
                     int fastHour = (int) value[8];
                     int fastRate = (int) value[9];
+                    Log.d("BLEService2", "读取心率 记录的时间" + hour + ":" + min + " 心率:" + rate);
                 }
                 // 睡眠时间，表示还有数据
                 // 睡眠时间，表示没有数据了，后面Byte[1]-[4]有效
-                else if (value[0] == (byte) 0xB1 || value[0] == (byte) 0xB0) {
+                else if (value[0] == (byte) 0x99 || value[0] == (byte) 0x9A) {
                     int time = (int) value[1];
-                    int min = (int) value[1];
-                    int hour = (int) value[2];
-                    int statue = (int) value[3];
+                    int min = (int) value[2];
+                    int hour = (int) value[3];
+                    String statueDesp = "";
+                    int statue = (int) value[4];
                     if (statue == 0x01) {
-                        // 入睡
+                        statueDesp = "入睡";
                     } else if (statue == 0x02) {
-                        // 浅睡
+                        statueDesp = "浅睡";
                     } else if (statue == 0x03) {
-                        // 深睡
+                        statueDesp = "深睡";
                     } else if (statue == 0x04) {
-                        // 中途清醒
+                        statueDesp = "中途清醒";
                     } else if (statue == 0x05) {
-                        // 醒来
+                        statueDesp = "醒来";
                     }
+                    Log.d("BLEService2", "睡眠时间 记录的时间" + time + " " + hour + ":" + min + " 睡眠状态:" + statueDesp);
                 }
-                // 睡眠时间，表示没有数据了，后面Byte[1]-[4]无效
-                else if (value[0] == (byte) 0x00) {
-                    Log.d("BLEService2", "读取每小时的步数 没有数据了");
+                else if (value[0] == (byte) 0x9B) {
+                    Log.d("BLEService2", "睡眠时间 没有数据了");
+                } else if (value[0] == (byte) 0x2C) {
+                    Log.d("BLEService2", "用户信息写入成功");
                 }
             }
         });
@@ -246,6 +306,12 @@ public class BLEService2 extends Service {
             @Override
             public void showProgress(int progress) {
                 Log.d("BLEService2", "ota:" + progress);
+            }
+        });
+        bleFramework.setBleWriteErrorListener(new BLEWriteErrorListener() {
+            @Override
+            public void getErrorRequest(BLEErrorRequest value) {
+                Log.d("BLEService2", "出错");
             }
         });
         bleFramework.initBLE();
@@ -518,7 +584,7 @@ public class BLEService2 extends Service {
     public static void setTime(Context context) {
         Calendar calendar = Calendar.getInstance();
         byte[] bytes = new byte[17];
-        bytes[0] = (byte) 0xC1;
+        bytes[0] = (byte) 0xC0;
         bytes[1] = (byte) calendar.get(Calendar.SECOND);
         bytes[2] = (byte) calendar.get(Calendar.MINUTE);
         bytes[3] = (byte) calendar.get(Calendar.HOUR);
@@ -539,14 +605,14 @@ public class BLEService2 extends Service {
         bytes[14] = (byte) 0;
         bytes[15] = (byte) 0;
         bytes[16] = (byte) 0x5A;
-        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SETWrite, bytes, context);
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SpecialSet, Params.UUID_SERVICE_WristBand_SpecialSetWrite, bytes, context);
     }
 
     /**
      * 读取EBC和消耗的药瓶量
      */
     public static void readEBC(Context context) {
-        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0xFF, context);
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x9F, context);
     }
 
     /**
@@ -566,7 +632,7 @@ public class BLEService2 extends Service {
      */
     public static void setEBC(int b1, int b1_use, int b2, int b2_use, int b3, int b3_use, int b4, int b4_use, int b5, int b5_use, int totalScore, Context context) {
         byte[] bytes = new byte[17];
-        bytes[0] = (byte) 0xC5;
+        bytes[0] = (byte) 0xCC;
         bytes[1] = (byte) 0xA5;
         bytes[2] = (byte) b1;
         bytes[3] = (byte) b1_use;
@@ -584,7 +650,14 @@ public class BLEService2 extends Service {
         bytes[14] = totalScoreTemp[0];
         bytes[15] = (byte) 0;
         bytes[16] = (byte) (bytes[1] | bytes[2] | bytes[4]);
-        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SETWrite, bytes, context);
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SpecialSet, Params.UUID_SERVICE_WristBand_SpecialSetWrite, bytes, context);
+    }
+
+    /**
+     * 读取当天的当前总步数
+     */
+    public static void todayTotalStep(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x80, context);
     }
 
     /**
@@ -598,20 +671,35 @@ public class BLEService2 extends Service {
      * 读取的前几天步数数据统计（理论上7天）
      */
     public static void dayTotalStep(Context context) {
-        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x83, context);
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x86, context);
     }
 
     /**
      * 读取心率
      */
     public static void heartRate(Context context) {
-        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x90, context);
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x88, context);
     }
 
     /**
      * 睡眠时间
      */
     public static void sleepTime(Context context) {
-        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0xb1, context);
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x9A, context);
+    }
+
+    /**
+     * 写入用户数据
+     */
+    public static void writeUserInfo(Context context, int sex, int height, int weight, int tatgetStep) {
+        byte[] bytes = new byte[6];
+        bytes[0] = (byte) 0xAC;
+        bytes[1] = (byte) sex;
+        bytes[2] = (byte) height;
+        bytes[3] = (byte) weight;
+        byte[] temp = HexUtil.intToByte(tatgetStep);
+        bytes[4] = temp[1];
+        bytes[5] = temp[0];
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
     }
 }

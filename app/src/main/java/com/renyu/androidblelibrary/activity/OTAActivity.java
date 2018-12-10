@@ -14,7 +14,7 @@ import com.renyu.androidblelibrary.R;
 import com.renyu.androidblelibrary.params.Params;
 import com.renyu.androidblelibrary.utils.DataUtils;
 import com.renyu.blelibrary.bean.BLEDevice;
-import com.renyu.blelibrary.impl.BLEConnectListener;
+import com.renyu.blelibrary.impl.BLEScanCallBackListener;
 import com.renyu.blelibrary.impl.BLEOTAListener;
 import com.renyu.blelibrary.impl.BLEStateChangeListener;
 import com.renyu.blelibrary.utils.BLEFramework;
@@ -75,7 +75,7 @@ public class OTAActivity extends AppCompatActivity {
         bleFramework=BLEFramework.getBleFrameworkInstance();
         bleFramework.setParams(this.getApplicationContext());
         bleFramework.setTimeSeconds(35000);
-        bleFramework.setBleConnectListener(new BLEConnectListener() {
+        bleFramework.setBleScanCallbackListener(new BLEScanCallBackListener() {
             @Override
             public void getAllScanDevice(BLEDevice bleDevice) {
                 Log.d("BActivity", bleDevice.getDevice().getName()+" "+bleDevice.getDevice().getAddress());

@@ -5,6 +5,9 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+import com.renyu.blelibrary.bean.BLEErrorRequest;
+import com.renyu.blelibrary.impl.BLEWriteErrorListener;
+
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,6 +27,7 @@ class RequestQueue {
     private volatile static RequestQueue queue;
 
     private BLEFramework bleFramework;
+    private BLEWriteErrorListener bleWriteErrorListener;
     private ExecutorService service;
     // 单信号量
     private Semaphore semaphore;
@@ -31,8 +35,9 @@ class RequestQueue {
     // 超时释放信号量
     private Disposable delayDisposable;
 
-    private RequestQueue(BLEFramework bleFramework) {
+    private RequestQueue(BLEFramework bleFramework, BLEWriteErrorListener bleWriteErrorListener) {
         this.bleFramework=bleFramework;
+        this.bleWriteErrorListener = bleWriteErrorListener;
 
         service= Executors.newSingleThreadExecutor();
         semaphore=new Semaphore(1);
@@ -66,11 +71,11 @@ class RequestQueue {
         looperThread.start();
     }
 
-    static RequestQueue getQueueInstance(BLEFramework bleFramework) {
+    static RequestQueue getQueueInstance(BLEFramework bleFramework, BLEWriteErrorListener bleWriteErrorListener) {
         if (queue==null) {
             synchronized (RequestQueue.class) {
                 if (queue==null) {
-                    queue=new RequestQueue(bleFramework);
+                    queue=new RequestQueue(bleFramework, bleWriteErrorListener);
                 }
             }
         }
@@ -101,6 +106,11 @@ class RequestQueue {
 
                     @Override
                     public void onNext(Long value) {
+                        BLEErrorRequest errorRequest = new BLEErrorRequest();
+                        errorRequest.setServiceUUID(serviceUUID);
+                        errorRequest.setCharacUUID(characUUID);
+                        errorRequest.setBytes(bytes);
+                        bleWriteErrorListener.getErrorRequest(errorRequest);
                         release();
                     }
 

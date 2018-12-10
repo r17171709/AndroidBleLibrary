@@ -47,25 +47,31 @@ public class Main2Adapter extends RecyclerView.Adapter<Main2Adapter.MainViewHold
                     BLEService2.verifyCode("8888", holder.itemView.getContext());
                 }
                 else if (holder.getLayoutPosition()==2) {
-                    BLEService2.hourTotalStep(holder.itemView.getContext());
-                }
-                else if (holder.getLayoutPosition()==3) {
                     BLEService2.setTime(holder.itemView.getContext());
                 }
-                else if (holder.getLayoutPosition()==4) {
+                else if (holder.getLayoutPosition()==3) {
                     BLEService2.readEBC(holder.itemView.getContext());
                 }
-                else if (holder.getLayoutPosition()==5) {
+                else if (holder.getLayoutPosition()==4) {
                     BLEService2.setEBC(1, 0, 2, 0, 3, 0, 0, 0, 0, 0, 400, holder.itemView.getContext());
                 }
-                else if (holder.getLayoutPosition()==6){
-                    BLEService2.dayTotalStep(holder.itemView.getContext());
+                else if (holder.getLayoutPosition()==5) {
+                    BLEService2.todayTotalStep(holder.itemView.getContext());
+                }
+                else if (holder.getLayoutPosition()==6) {
+                    BLEService2.hourTotalStep(holder.itemView.getContext());
                 }
                 else if (holder.getLayoutPosition()==7){
-                    BLEService2.heartRate(holder.itemView.getContext());
+                    BLEService2.dayTotalStep(holder.itemView.getContext());
                 }
                 else if (holder.getLayoutPosition()==8){
+                    BLEService2.heartRate(holder.itemView.getContext());
+                }
+                else if (holder.getLayoutPosition()==9){
                     BLEService2.sleepTime(holder.itemView.getContext());
+                }
+                else if (holder.getLayoutPosition()==10){
+                    BLEService2.writeUserInfo(holder.itemView.getContext(), 1, 180, 85, 10000);
                 }
             }
         });

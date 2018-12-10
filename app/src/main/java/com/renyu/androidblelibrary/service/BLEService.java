@@ -16,7 +16,7 @@ import com.renyu.androidblelibrary.bean.BLECommandModel;
 import com.renyu.androidblelibrary.bean.BLEConnectModel;
 import com.renyu.androidblelibrary.params.Params;
 import com.renyu.blelibrary.bean.BLEDevice;
-import com.renyu.blelibrary.impl.BLEConnectListener;
+import com.renyu.blelibrary.impl.BLEScanCallBackListener;
 import com.renyu.blelibrary.impl.BLEOTAListener;
 import com.renyu.blelibrary.impl.BLERSSIListener;
 import com.renyu.blelibrary.impl.BLEReadResponseListener;
@@ -59,7 +59,7 @@ public class BLEService extends Service {
 
         bleFramework = BLEFramework.getBleFrameworkInstance();
         bleFramework.setParams(this.getApplicationContext());
-        bleFramework.setBleConnectListener(new BLEConnectListener() {
+        bleFramework.setBleScanCallbackListener(new BLEScanCallBackListener() {
             @Override
             public void getAllScanDevice(BLEDevice bleDevice) {
                 Log.d("BLEService", bleDevice.getDevice().getName() + " " + bleDevice.getDevice().getAddress());

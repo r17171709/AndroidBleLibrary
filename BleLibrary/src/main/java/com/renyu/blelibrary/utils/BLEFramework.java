@@ -23,13 +23,14 @@ import com.cypress.cysmart.CommonUtils.Constants;
 import com.cypress.cysmart.DataModelClasses.OTAParams;
 import com.cypress.cysmart.OTAFirmwareUpdate.OTAService;
 import com.renyu.blelibrary.bean.BLEDevice;
-import com.renyu.blelibrary.impl.BLEConnectListener;
 import com.renyu.blelibrary.impl.BLEOTAListener;
 import com.renyu.blelibrary.impl.BLERSSIListener;
 import com.renyu.blelibrary.impl.BLEReadResponseListener;
 import com.renyu.blelibrary.impl.BLEScan21CallBack;
 import com.renyu.blelibrary.impl.BLEScanCallBack;
+import com.renyu.blelibrary.impl.BLEScanCallBackListener;
 import com.renyu.blelibrary.impl.BLEStateChangeListener;
+import com.renyu.blelibrary.impl.BLEWriteErrorListener;
 import com.renyu.blelibrary.impl.BLEWriteResponseListener;
 import com.renyu.blelibrary.impl.IScanAndConnRule;
 
@@ -65,7 +66,7 @@ public class BLEFramework {
     // 搜索到的设备
     private HashMap<String, BLEDevice> tempsDevices;
     // 搜索所需时间
-    private int timeSeconds=5000;
+    private int timeSeconds=3000;
     // 搜索Handler
     private Handler handlerScan;
 
@@ -83,17 +84,19 @@ public class BLEFramework {
     private BluetoothDevice currentDevice;
 
     // BLE连接回调
-    private BLEConnectListener bleConnectListener;
+    private BLEScanCallBackListener bleScanCallBackListener;
     // BLE当前状态
     private BLEStateChangeListener bleStateChangeListener;
     // BLE返回值回调
     private BLEWriteResponseListener bleWriteResponseListener;
-    // OTA进度回调
-    private BLEOTAListener bleotaListener;
     // BLE读命令回调
     private BLEReadResponseListener bleReadResponseListener;
     // RSSI回调
     private BLERSSIListener blerssiListener;
+    // OTA进度回调
+    private BLEOTAListener bleotaListener;
+    // BLE指令无返回回调
+    private BLEWriteErrorListener bleWriteErrorListener;
 
     // OTA标记
     public static boolean isOTA=false;
@@ -131,7 +134,7 @@ public class BLEFramework {
         }
 
         // 初始化队列
-        requestQueue=RequestQueue.getQueueInstance(bleFramework);
+        requestQueue=RequestQueue.getQueueInstance(bleFramework, bleWriteErrorListener);
 
         // 临时存储BLE全部设备
         tempsDevices=new HashMap<>();
@@ -144,12 +147,20 @@ public class BLEFramework {
         // GATT回调
         bleGattCallback=new BluetoothGattCallback() {
             @Override
+            public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+                super.onMtuChanged(gatt, mtu, status);
+            }
+
+            @Override
             public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
                 super.onConnectionStateChange(gatt, status, newState);
                 switch (newState) {
                     // BLE连接完成
                     case BluetoothProfile.STATE_CONNECTED:
                         setConnectionState(STATE_CONNECTED);
+//                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//                            gatt.requestMtu(30);
+//                        }
                         // 开始搜索服务
                         gatt.discoverServices();
                         break;
@@ -303,7 +314,7 @@ public class BLEFramework {
                         device1.setDevice(result.getDevice());
                         device1.setScanRecord(result.getScanRecord().getBytes());
                         tempsDevices.put(result.getDevice().getAddress(), device1);
-                        bleConnectListener.getAllScanDevice(device1);
+                        bleScanCallBackListener.getAllScanDevice(device1);
                     }
                 }
             };
@@ -327,7 +338,7 @@ public class BLEFramework {
                         device1.setDevice(device);
                         device1.setScanRecord(scanRecord);
                         tempsDevices.put(device.getAddress(), device1);
-                        bleConnectListener.getAllScanDevice(device1);
+                        bleScanCallBackListener.getAllScanDevice(device1);
                     }
                 }
             };
@@ -366,7 +377,7 @@ public class BLEFramework {
                             device1.setRssi(result.getRssi());
                             device1.setDevice(result.getDevice());
                             device1.setScanRecord(result.getScanRecord().getBytes());
-                            bleConnectListener.getAllScanDevice(device1);
+                            bleScanCallBackListener.getAllScanDevice(device1);
                             stopScan(false);
                             startConn(result.getDevice());
                         }
@@ -394,7 +405,7 @@ public class BLEFramework {
                             device1.setRssi(rssi);
                             device1.setDevice(device);
                             device1.setScanRecord(scanRecord);
-                            bleConnectListener.getAllScanDevice(device1);
+                            bleScanCallBackListener.getAllScanDevice(device1);
                             stopScan(false);
                             startConn(device);
                         }
@@ -578,10 +589,10 @@ public class BLEFramework {
 
     /**
      * 设置BLE连接回调
-     * @param bleConnectListener
+     * @param bleScanCallBackListener
      */
-    public void setBleConnectListener(BLEConnectListener bleConnectListener) {
-        this.bleConnectListener = bleConnectListener;
+    public void setBleScanCallbackListener(BLEScanCallBackListener bleScanCallBackListener) {
+        this.bleScanCallBackListener = bleScanCallBackListener;
     }
 
     /**
@@ -618,6 +629,14 @@ public class BLEFramework {
 
     public void setBlerssiListener(BLERSSIListener blerssiListener) {
         this.blerssiListener = blerssiListener;
+    }
+
+    /**
+     * BLE指令无返回回调
+     * @param bleWriteErrorListener
+     */
+    public void setBleWriteErrorListener(BLEWriteErrorListener bleWriteErrorListener) {
+        this.bleWriteErrorListener = bleWriteErrorListener;
     }
 
     /**

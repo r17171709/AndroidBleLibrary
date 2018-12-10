@@ -50,13 +50,15 @@ public class Main2Activity extends AppCompatActivity {
         models=new ArrayList<>();
         models.add("验证UID");
         models.add("验证Code");
-        models.add("读取每小时的步数");
         models.add("时间设置");
         models.add("读取EBC和消耗的药瓶量");
         models.add("写入EBC和药瓶");
+        models.add("读取当天的当前总步数");
+        models.add("读取每小时的步数");
         models.add("读取的前几天步数数据统计（理论上7天）");
         models.add("读取心率");
         models.add("睡眠时间");
+        models.add("设置用户信息");
 
         EventBus.getDefault().register(this);
 
