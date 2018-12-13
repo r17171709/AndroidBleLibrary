@@ -149,6 +149,8 @@ public class BLEFramework {
             @Override
             public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
                 super.onMtuChanged(gatt, mtu, status);
+                // 开始搜索服务
+                gatt.discoverServices();
             }
 
             @Override
@@ -158,11 +160,9 @@ public class BLEFramework {
                     // BLE连接完成
                     case BluetoothProfile.STATE_CONNECTED:
                         setConnectionState(STATE_CONNECTED);
-//                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//                            gatt.requestMtu(30);
-//                        }
-                        // 开始搜索服务
-                        gatt.discoverServices();
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            gatt.requestMtu(192);
+                        }
                         break;
                     // BLE断开连接
                     case BluetoothProfile.STATE_DISCONNECTED:

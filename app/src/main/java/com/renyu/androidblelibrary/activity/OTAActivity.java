@@ -14,8 +14,8 @@ import com.renyu.androidblelibrary.R;
 import com.renyu.androidblelibrary.params.Params;
 import com.renyu.androidblelibrary.utils.DataUtils;
 import com.renyu.blelibrary.bean.BLEDevice;
-import com.renyu.blelibrary.impl.BLEScanCallBackListener;
 import com.renyu.blelibrary.impl.BLEOTAListener;
+import com.renyu.blelibrary.impl.BLEScanCallBackListener;
 import com.renyu.blelibrary.impl.BLEStateChangeListener;
 import com.renyu.blelibrary.utils.BLEFramework;
 
@@ -78,7 +78,7 @@ public class OTAActivity extends AppCompatActivity {
         bleFramework.setBleScanCallbackListener(new BLEScanCallBackListener() {
             @Override
             public void getAllScanDevice(BLEDevice bleDevice) {
-                Log.d("BActivity", bleDevice.getDevice().getName()+" "+bleDevice.getDevice().getAddress());
+                Log.d("OTAActivity", bleDevice.getDevice().getName()+" "+bleDevice.getDevice().getAddress());
                 byte[] scanRecord=bleDevice.getScanRecord();
                 int a=(int) scanRecord[5]&0xff;
                 int b=(int) scanRecord[6]&0xff;
@@ -100,13 +100,13 @@ public class OTAActivity extends AppCompatActivity {
             @Override
             public void showProgress(int progress) {
                 if (progress==-1) {
-                    Toast.makeText(OTAActivity.this, "升级失败", Toast.LENGTH_SHORT).show();
+                    Log.d("OTAActivity", "升级失败");
                 }
                 else if (progress==101) {
-                    Toast.makeText(OTAActivity.this, "升级成功", Toast.LENGTH_SHORT).show();
+                    Log.d("OTAActivity", "升级成功");
                 }
                 else {
-                    Toast.makeText(OTAActivity.this, "升级完成"+progress+"%", Toast.LENGTH_SHORT).show();
+                    Log.d("OTAActivity", "升级完成"+progress+"%");
                 }
             }
         });
