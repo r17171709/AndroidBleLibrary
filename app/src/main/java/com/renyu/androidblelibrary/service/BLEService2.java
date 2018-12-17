@@ -33,7 +33,11 @@ import com.renyu.blelibrary.utils.HexUtil;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -140,7 +144,7 @@ public class BLEService2 extends Service {
                     Log.d("BLEService2", "EBC写入失败");
                 }
                 // 读取每小时的步数,表示还有数据
-                else if (value[0] == (byte) 0x86 || value[0] == (byte) 0x85) {
+                else if (value[0] == (byte) 0x86 || value[0] == (byte) 0x85 || value[0] == (byte) 0x80) {
                     Log.d("BLEService2", "读取的前几天步数数据统计");
 
                     int time = (int) value[1];
@@ -246,7 +250,7 @@ public class BLEService2 extends Service {
                     totalStepTemp[1] = value[11];
                     int totalStep = HexUtil.byte2ToInt(totalStepTemp);
 
-                    Log.d("BLEService2", "读取每小时的步数 time:"+time+" hour:"+hour+" heartRate:" + heartRate + " ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " totalStep:" + totalStep);
+                    Log.d("BLEService2", "读取每小时的步数 time:" + time + " hour:" + hour + " heartRate:" + heartRate + " ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " totalStep:" + totalStep);
                 } else if (value[0] == (byte) 0x88) {
                     int min = (int) value[1];
                     int hour = (int) value[2];
@@ -279,11 +283,37 @@ public class BLEService2 extends Service {
                         statueDesp = "醒来";
                     }
                     Log.d("BLEService2", "睡眠时间 记录的时间 " + time + " " + hour + ":" + min + " 睡眠状态:" + statueDesp);
-                }
-                else if (value[0] == (byte) 0x9B) {
+                } else if (value[0] == (byte) 0x9B) {
                     Log.d("BLEService2", "睡眠时间 没有数据了");
                 } else if (value[0] == (byte) 0x2C) {
                     Log.d("BLEService2", "用户信息写入成功");
+                } else if (value[0] == (byte) 0x30) {
+                    Log.d("BLEService2", "事件设置成功");
+                } else if (value[0] == (byte) 0x31) {
+                    Log.d("BLEService2", "闹钟写入失败");
+                } else if (value[0] == (byte) 0x32) {
+                    Log.d("BLEService2", "添加时，该闹钟编码已存在");
+                } else if (value[0] == (byte) 0x33) {
+                    Log.d("BLEService2", "修改和删除时，该闹钟不存在");
+                } else if (value[0] == (byte) 0xBB) {
+                    int type = value[1];
+                    if (type == 1) {
+                        Log.d("BLEService2", "闹钟式提醒");
+                    } else if (type == 0) {
+                        int time = value[2];
+                        Log.d("BLEService2", "间隔式提醒，久坐提醒时常：" + time + "分钟");
+                    }
+                } else if (value[0] == (byte) 0xBA) {
+                    ArrayList<Integer> alarms = new ArrayList<>();
+                    for (int j = 1; j <= 13; j++) {
+                        int total = j == 13 ? 4 : 8;
+                        for (int i = 1; i <= total; i++) {
+                            if (((value[j] >> (i - 1)) & 0x01) == 1) {
+                                alarms.add(i + (j - 1) * 8);
+                            }
+                        }
+                    }
+                    Log.d("BLEService2", "读取到的闹钟信息数量为:" + alarms.size());
                 }
             }
         });
@@ -709,5 +739,430 @@ public class BLEService2 extends Service {
         bytes[4] = temp[1];
         bytes[5] = temp[0];
         sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
+     * 事件提醒
+     *
+     * @param context
+     * @param operType
+     * @param no
+     * @param time
+     * @param repeatType
+     * @param content
+     */
+    private static void event(Context context, int operType, int no, long time, int repeatType, String content) {
+        SimpleDateFormat format = new SimpleDateFormat("HH", Locale.CHINA);
+        int hour = Integer.parseInt(format.format(new Date(time)));
+        format = new SimpleDateFormat("mm", Locale.CHINA);
+        int minute = Integer.parseInt(format.format(new Date(time)));
+        format = new SimpleDateFormat("dd", Locale.CHINA);
+        int day = Integer.parseInt(format.format(new Date(time)));
+        format = new SimpleDateFormat("MM", Locale.CHINA);
+        int month = Integer.parseInt(format.format(new Date(time)));
+        byte[] bytes = new byte[11 + content.getBytes().length];
+        bytes[0] = (byte) 0xB0;
+        bytes[1] = (byte) operType;
+        bytes[2] = (byte) no;
+        bytes[3] = (byte) 0;
+        bytes[4] = (byte) minute;
+        bytes[5] = (byte) hour;
+        bytes[6] = (byte) repeatType;
+        bytes[7] = (byte) 0;
+        bytes[8] = (byte) day;
+        bytes[9] = (byte) month;
+        bytes[10] = (byte) content.getBytes().length;
+        for (int i = 0; i < content.getBytes().length; i++) {
+            bytes[11 + i] = content.getBytes()[i];
+        }
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    public static void eventAdd(Context context, int no, long time, int repeatType, String content) {
+        event(context, 0, no, time, repeatType, content);
+    }
+
+    public static void eventUpdate(Context context, int no, long time, int repeatType, String content) {
+        event(context, 1, no, time, repeatType, content);
+    }
+
+    public static void eventDelete(Context context, int no) {
+        byte[] bytes = new byte[4];
+        bytes[0] = (byte) 0xB0;
+        bytes[1] = (byte) 2;
+        bytes[2] = (byte) no;
+        bytes[3] = (byte) 0;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
+     * 闹钟模式
+     *
+     * @param context
+     * @param operType
+     * @param no
+     * @param time
+     * @param repeatType
+     * @param sleep
+     */
+    private static void alarmClock(Context context, int operType, int no, long time, int repeatType, int sleep) {
+        SimpleDateFormat format = new SimpleDateFormat("HH", Locale.CHINA);
+        int hour = Integer.parseInt(format.format(new Date(time)));
+        format = new SimpleDateFormat("mm", Locale.CHINA);
+        int minute = Integer.parseInt(format.format(new Date(time)));
+        format = new SimpleDateFormat("dd", Locale.CHINA);
+        int day = Integer.parseInt(format.format(new Date(time)));
+        format = new SimpleDateFormat("MM", Locale.CHINA);
+        int month = Integer.parseInt(format.format(new Date(time))) + 1;
+        byte[] bytes;
+        if (repeatType != 0x00) {
+            bytes = new byte[8];
+        } else {
+            bytes = new byte[10];
+            bytes[8] = (byte) day;
+            bytes[9] = (byte) month;
+        }
+        bytes[0] = (byte) 0xB0;
+        bytes[1] = (byte) operType;
+        bytes[2] = (byte) no;
+        bytes[3] = (byte) 2;
+        bytes[4] = (byte) minute;
+        bytes[5] = (byte) hour;
+        bytes[6] = (byte) repeatType;
+        bytes[7] = (byte) sleep;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    public static void alarmClockAdd(Context context, int no, long time, int repeatType, int sleep) {
+        alarmClock(context, 0, no, time, repeatType, sleep);
+    }
+
+    public static void alarmClockUpdate(Context context, int no, long time, int repeatType, int sleep) {
+        alarmClock(context, 1, no, time, repeatType, sleep);
+    }
+
+    public static void alarmClockDelete(Context context, int no) {
+        byte[] bytes = new byte[4];
+        bytes[0] = (byte) 0xB0;
+        bytes[1] = (byte) 2;
+        bytes[2] = (byte) no;
+        bytes[3] = (byte) 2;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
+     * 久坐提醒 闹钟式提醒
+     *
+     * @param context
+     * @param operType
+     * @param no
+     * @param time
+     * @param repeatType
+     */
+    private static void sedentaryByAlarm(Context context, int operType, int no, long time, int repeatType) {
+        SimpleDateFormat format = new SimpleDateFormat("HH", Locale.CHINA);
+        int hour = Integer.parseInt(format.format(new Date(time)));
+        format = new SimpleDateFormat("mm", Locale.CHINA);
+        int minute = Integer.parseInt(format.format(new Date(time)));
+        byte[] bytes = new byte[7];
+        bytes[0] = (byte) 0xB0;
+        bytes[1] = (byte) operType;
+        bytes[2] = (byte) no;
+        bytes[3] = (byte) 1;
+        bytes[4] = (byte) minute;
+        bytes[5] = (byte) hour;
+        bytes[6] = (byte) repeatType;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    public static void sedentaryByAlarmAdd(Context context, int no, long time, int repeatType) {
+        sedentaryByAlarm(context, 0, no, time, repeatType);
+    }
+
+    public static void sedentaryByAlarmUpdate(Context context, int no, long time, int repeatType) {
+        sedentaryByAlarm(context, 1, no, time, repeatType);
+    }
+
+    public static void sedentaryByAlarmDelete(Context context, int no) {
+        byte[] bytes = new byte[4];
+        bytes[0] = (byte) 0xB0;
+        bytes[1] = (byte) 2;
+        bytes[2] = (byte) no;
+        bytes[3] = (byte) 1;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
+     * 按编号读取闹钟时间
+     *
+     * @param context
+     * @param no
+     */
+    public static void readAlarm(Context context, int no) {
+        byte[] bytes = new byte[2];
+        bytes[0] = (byte) 0xB6;
+        bytes[1] = (byte) no;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, bytes, context);
+    }
+
+    /**
+     * 久坐提醒 间隔式提醒 切换状态
+     *
+     * @param context
+     * @param minute
+     */
+    public static void sedentaryByIntervalSetting(Context context, int minute) {
+        byte[] bytes = new byte[3];
+        bytes[0] = (byte) 0xA6;
+        bytes[1] = (byte) 0;
+        bytes[2] = (byte) minute;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
+     * 久坐提醒 闹钟式提醒 切换状态
+     *
+     * @param context
+     */
+    public static void sedentaryByAlarmSetting(Context context) {
+        byte[] bytes = new byte[3];
+        bytes[0] = (byte) 0xA6;
+        bytes[1] = (byte) 1;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
+     * 读取久坐提醒配置信息
+     *
+     * @param context
+     */
+    public static void sedentaryReminder(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, new byte[]{(byte) 0xBB}, context);
+    }
+
+    /**
+     * 读取闹钟信息
+     *
+     * @param context
+     */
+    public static void allAlarmInfo(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, new byte[]{(byte) 0xBA}, context);
+    }
+
+    /**
+     * 勿扰模式
+     *
+     * @param context
+     * @param type
+     * @param startHour
+     * @param startMinute
+     * @param endHour
+     * @param endMinute
+     */
+    public static void noDisturb(Context context, int type, int startHour, int startMinute, int endHour, int endMinute) {
+        byte[] bytes = new byte[6];
+        bytes[0] = (byte) 0xA8;
+        bytes[1] = (byte) type;
+        bytes[2] = (byte) startMinute;
+        bytes[3] = (byte) startHour;
+        bytes[4] = (byte) endMinute;
+        bytes[5] = (byte) endHour;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
+     * 背光设置
+     *
+     * @param context
+     * @param num
+     */
+    public static void screenLight(Context context, int num) {
+        byte[] bytes = new byte[2];
+        bytes[0] = (byte) 0xA0;
+        bytes[1] = (byte) num;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
+     * 更换主题
+     *
+     * @param context
+     * @param num
+     */
+    public static void choiceTheme(Context context, int num) {
+        byte[] bytes = new byte[2];
+        bytes[0] = (byte) 0xA4;
+        bytes[1] = (byte) num;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
+     * 事件提醒处理
+     *
+     * @param values
+     */
+    private void eventOper(byte[] values) {
+        int num = (int) values[0];
+
+        byte[] despByte = new byte[values.length - 9];
+        for (int i = 9; i < values.length; i++) {
+            despByte[i - 9] = values[i];
+        }
+        String desp = new String(despByte).trim();
+
+        ArrayList<Integer> allChoiceWeeks = new ArrayList<>();
+        if ((values[4] & 0x81) == 0x81) {
+            // 包含星期一
+            allChoiceWeeks.add(2);
+        }
+        if ((values[4] & 0x82) == 0x82) {
+            // 包含星期二
+            allChoiceWeeks.add(3);
+        }
+        if ((values[4] & 0x84) == 0x84) {
+            // 包含星期三
+            allChoiceWeeks.add(4);
+        }
+        if ((values[4] & 0x88) == 0x88) {
+            // 包含星期四
+            allChoiceWeeks.add(5);
+        }
+        if ((values[4] & 0x90) == 0x90) {
+            // 包含星期五
+            allChoiceWeeks.add(6);
+        }
+        if ((values[4] & 0xA0) == 0xA0) {
+            // 包含星期六
+            allChoiceWeeks.add(7);
+        }
+        if ((values[4] & 0xC0) == 0xC0) {
+            // 包含星期天
+            allChoiceWeeks.add(1);
+        }
+        // 只提醒一次，每月，每年
+        if (allChoiceWeeks.size() == 0) {
+            int repeat = (int) values[4];
+
+            if (repeat == (byte) 0x00) {
+                // 一次
+                boolean isEnd = false;
+                // 判断当前时间是否为今天
+                Calendar calendar = Calendar.getInstance();
+                int month = calendar.get(Calendar.MONTH) + 1;
+                int day = calendar.get(Calendar.DAY_OF_MONTH);
+                if (month == values[7] && day == values[6]) {
+                    isEnd = todayCompare(calendar, values);
+                }
+                // 同月份天数小
+                else if (month == values[7] && day > values[6]) {
+                    isEnd = true;
+                }
+                // 月份小
+                else if (month > values[7]) {
+                    isEnd = true;
+                }
+
+                Log.d("BLEService2", desp + " " +
+                        "只提醒一次 " +
+                        (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
+                        (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
+            } else if (repeat == (byte) 0x01) {
+                // 每月
+                boolean isEnd = false;
+                Calendar calendar = Calendar.getInstance();
+                int day = calendar.get(Calendar.DAY_OF_MONTH);
+                if (day == values[6]) {
+                    isEnd = todayCompare(calendar, values);
+
+                    Log.d("BLEService2", desp + " " +
+                            "每月 " +
+                            (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
+                            (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
+                }
+
+            } else if (repeat == (byte) 0x02) {
+                // 每年
+                boolean isEnd = false;
+                Calendar calendar = Calendar.getInstance();
+                int month = calendar.get(Calendar.MONTH) + 1;
+                int day = calendar.get(Calendar.DAY_OF_MONTH);
+                if (month == values[7] && day == values[6]) {
+                    isEnd = todayCompare(calendar, values);
+
+                    Log.d("BLEService2", desp + " " +
+                            "每年 " +
+                            (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
+                            (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
+                }
+            }
+        }
+        // 每周X
+        else {
+            boolean isEnd = false;
+            Calendar calendar = Calendar.getInstance();
+            int week = calendar.get(Calendar.DAY_OF_WEEK);
+            for (Integer allChoiceWeek : allChoiceWeeks) {
+                if (allChoiceWeek == week) {
+                    isEnd = todayCompare(calendar, values);
+
+                    if (allChoiceWeeks.size() == 7) {
+                        Log.d("BLEService2", desp + " " +
+                                "每天 " +
+                                (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
+                                (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
+                    }
+                    else if (allChoiceWeeks.size() == 1) {
+                        Log.d("BLEService2", desp + " " +
+                                "每周 " +
+                                (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
+                                (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
+                    }
+                    else {
+                        StringBuilder repeat = new StringBuilder();
+                        for (Integer choiceWeek : allChoiceWeeks) {
+                            switch (choiceWeek) {
+                                case 1:
+                                    repeat.append("周日 ");
+                                    break;
+                                case 2:
+                                    repeat.append("周一 ");
+                                    break;
+                                case 3:
+                                    repeat.append("周二 ");
+                                    break;
+                                case 4:
+                                    repeat.append("周三 ");
+                                    break;
+                                case 5:
+                                    repeat.append("周四 ");
+                                    break;
+                                case 6:
+                                    repeat.append("周五 ");
+                                    break;
+                                case 7:
+                                    repeat.append("周六 ");
+                                    break;
+                            }
+                        }
+                        Log.d("BLEService2", desp + " " +
+                                repeat.toString() + " " +
+                                (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
+                                (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean todayCompare(Calendar calendar, byte[] values) {
+        boolean isEnd = false;
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+        if (hour > values[3]) {
+            isEnd = true;
+        } else if (hour == values[3] && minute >= values[2]) {
+            isEnd = true;
+        }
+        return isEnd;
     }
 }

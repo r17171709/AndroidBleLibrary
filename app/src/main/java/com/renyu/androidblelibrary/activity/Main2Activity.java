@@ -58,6 +58,13 @@ public class Main2Activity extends AppCompatActivity {
         models.add("读取心率");
         models.add("睡眠时间");
         models.add("设置用户信息");
+        models.add("读取久坐提醒配置信息");
+        models.add("读取闹钟信息");
+        models.add("事件提醒添加");
+        models.add("普通闹钟提醒添加");
+        models.add("闹钟式久坐提醒添加");
+        models.add("勿扰模式");
+        models.add("按编号读取闹钟时间");
 
         EventBus.getDefault().register(this);
 
@@ -76,6 +83,7 @@ public class Main2Activity extends AppCompatActivity {
                 for (BLEDevice device : devices) {
                     if (device.getDevice()!=null && device.getDevice().getName() != null && device.getDevice().getName().equals("ebaina")) {
                         BLEService2.conn(Main2Activity.this, device.getDevice());
+                        break;
                     }
                 }
             }
