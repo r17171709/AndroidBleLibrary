@@ -143,15 +143,13 @@ public class BLEService2 extends Service {
                 } else if (value[0] == (byte) 0x4F) {
                     Log.d("BLEService2", "EBC写入失败");
                 }
-                // 读取每小时的步数,表示还有数据
-                else if (value[0] == (byte) 0x86 || value[0] == (byte) 0x85 || value[0] == (byte) 0x80) {
-                    Log.d("BLEService2", "读取的前几天步数数据统计");
-
-                    int time = (int) value[1];
+                // 读取截止到当前时间总数据
+                else if (value[0] == (byte) 0x80) {
+                    int time = HexUtil.byte4ToInt(new byte[]{value[4], value[3], value[2], value[1]});
 
                     // 运动强度
                     String intensityDesp = "";
-                    int intensity = (int) value[2];
+                    int intensity = (int) value[5];
                     if (intensity == 0x01) {
                         intensityDesp = "差";
                     } else if (intensity == 0x03) {
@@ -162,42 +160,39 @@ public class BLEService2 extends Service {
                         intensityDesp = "高";
                     }
 
-                    // 平均心率（开启实时心率有效，否则为0）
-                    int heartRate = (int) value[3];
+                    // 产生的总的EBC
+                    int ebc = (int) value[6];
 
-                    // 今天到现在时间为止产生的总的EBC
-                    int ebc = (int) value[4];
-
-                    // 今天到现在时间为止的距离（单位：十米）
+                    // 总的距离（单位：十米）
                     byte[] distanceTemp = new byte[2];
-                    distanceTemp[0] = value[6];
-                    distanceTemp[1] = value[5];
+                    distanceTemp[0] = value[8];
+                    distanceTemp[1] = value[7];
                     int distance = HexUtil.byte2ToInt(distanceTemp);
 
-                    // 今天到现在时间为止消耗的卡路里（单位：千卡）
+                    // 总的卡路里（单位：千卡）
                     byte[] calorieTemp = new byte[2];
-                    calorieTemp[0] = value[8];
-                    calorieTemp[1] = value[7];
+                    calorieTemp[0] = value[10];
+                    calorieTemp[1] = value[9];
                     int calorie = HexUtil.byte2ToInt(calorieTemp);
 
-                    // 今天到现在时间为止运动时间（单位：分钟）
+                    // 总的运动时间（单位：分钟）
                     byte[] exerciseTimeTemp = new byte[2];
-                    exerciseTimeTemp[0] = value[10];
-                    exerciseTimeTemp[1] = value[9];
+                    exerciseTimeTemp[0] = value[12];
+                    exerciseTimeTemp[1] = value[11];
                     int exerciseTime = HexUtil.byte2ToInt(exerciseTimeTemp);
 
-                    // 今天到现在时间为止总步数
-                    byte[] totalStepTemp = new byte[]{value[16], value[15], value[14], value[13]};
+                    // 总的步数
+                    byte[] totalStepTemp = new byte[4];
+                    totalStepTemp[0] = value[16];
+                    totalStepTemp[1] = value[15];
+                    totalStepTemp[2] = value[14];
+                    totalStepTemp[3] = value[13];
                     int totalStep = HexUtil.byte4ToInt(totalStepTemp);
 
-                    if (value[0] == (byte) 0x80) {
-                        Log.d("BLEService2", "读取当天的当前总步数 time:" + time + " heartRate:" + heartRate + " ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " totalStep:" + totalStep);
-                    } else if (value[0] == (byte) 0x86 || value[0] == (byte) 0x85) {
-                        Log.d("BLEService2", "读取的前几天步数 time:" + time + " heartRate:" + heartRate + " ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " totalStep:" + totalStep);
-                    }
+                    Log.d("BLEService2", "截止当前时间的运动数据 time:" + time * 3600 + " ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " exerciseTime:" + exerciseTime + " totalStep:" + totalStep);
                 }
                 // 读取每小时的步数,表示还有数据
-                // 读取每小时的步数,表示没有数据了，后面Byte[1]-[16]有效
+                // 读取每小时的步数,表示没有数据了,后面Byte[1]-[16]有效
                 else if (value[0] == (byte) 0x82 || value[0] == (byte) 0x81) {
                     byte[] temp = new byte[value.length - 1];
                     for (int i = 0; i < temp.length; i++) {
@@ -206,13 +201,11 @@ public class BLEService2 extends Service {
 
                     byte[] result = AESCBCNoPadding.decryption(temp);
 
-                    int time = (int) value[1];
-
-                    int hour = (int) value[2];
+                    int time = HexUtil.byte4ToInt(new byte[]{value[4], value[3], value[2], value[1]});
 
                     // 运动强度
                     String intensityDesp = "";
-                    int intensity = (int) value[3];
+                    int intensity = (int) value[5];
                     if (intensity == 0x01) {
                         intensityDesp = "差";
                     } else if (intensity == 0x03) {
@@ -224,33 +217,78 @@ public class BLEService2 extends Service {
                     }
 
                     // 一小时内运动的时间（单位：分钟）
-                    int exerciseTime = (int) value[4];
+                    int exerciseTime = (int) value[6];
 
                     // 平均心率（开启实时心率有效，否则为0）
-                    int heartRate = (int) value[5];
+                    int heartRate = (int) value[7];
 
                     // 一小时产生的EBC
-                    int ebc = (int) value[6];
+                    int ebc = (int) value[8];
 
                     // 一小时内距离（单位：十米）
+                    byte[] distanceTemp = new byte[2];
+                    distanceTemp[0] = value[10];
+                    distanceTemp[1] = value[9];
+                    int distance = HexUtil.byte2ToInt(distanceTemp);
+
+                    // 一小时内消耗的卡路里（单位：千卡）
+                    byte[] calorieTemp = new byte[2];
+                    calorieTemp[0] = value[12];
+                    calorieTemp[1] = value[11];
+                    int calorie = HexUtil.byte2ToInt(calorieTemp);
+
+                    // 一小时的总步数
+                    byte[] totalStepTemp = new byte[2];
+                    totalStepTemp[0] = value[14];
+                    totalStepTemp[1] = value[13];
+                    int totalStep = HexUtil.byte2ToInt(totalStepTemp);
+
+                    Log.d("BLEService2", "读取每小时的步数 time:" + time * 3600 + " heartRate:" + heartRate + " ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " exerciseTime:" + exerciseTime + " totalStep:" + totalStep);
+                }
+                // 读取的前几天步数数据统计,表示还有数据
+                // 读取的前几天步数数据统计,后面Byte[1]-[16]有效
+                else if (value[0] == (byte) 0x86 || value[0] == (byte) 0x85) {
+                    int time = HexUtil.byte4ToInt(new byte[]{value[4], value[3], value[2], value[1]});
+
+                    // 运动强度
+                    String intensityDesp = "";
+                    int intensity = (int) value[5];
+                    if (intensity == 0x01) {
+                        intensityDesp = "差";
+                    } else if (intensity == 0x03) {
+                        intensityDesp = "低";
+                    } else if (intensity == 0x07) {
+                        intensityDesp = "中";
+                    } else if (intensity == 0x0F) {
+                        intensityDesp = "高";
+                    }
+
+                    // 今天到现在时间为止产生的总的EBC
+                    int ebc = (int) value[6];
+
+                    // 今天到现在时间为止的距离（单位：十米）
                     byte[] distanceTemp = new byte[2];
                     distanceTemp[0] = value[8];
                     distanceTemp[1] = value[7];
                     int distance = HexUtil.byte2ToInt(distanceTemp);
 
-                    // 一小时内消耗的卡路里（单位：千卡）
+                    // 今天到现在时间为止消耗的卡路里（单位：千卡）
                     byte[] calorieTemp = new byte[2];
                     calorieTemp[0] = value[10];
                     calorieTemp[1] = value[9];
                     int calorie = HexUtil.byte2ToInt(calorieTemp);
 
-                    // 一小时的总步数
-                    byte[] totalStepTemp = new byte[2];
-                    totalStepTemp[0] = value[12];
-                    totalStepTemp[1] = value[11];
-                    int totalStep = HexUtil.byte2ToInt(totalStepTemp);
+                    // 今天到现在时间为止运动时间（单位：分钟）
+                    byte[] exerciseTimeTemp = new byte[2];
+                    exerciseTimeTemp[0] = value[12];
+                    exerciseTimeTemp[1] = value[11];
+                    int exerciseTime = HexUtil.byte2ToInt(exerciseTimeTemp);
 
-                    Log.d("BLEService2", "读取每小时的步数 time:" + time + " hour:" + hour + " heartRate:" + heartRate + " ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " totalStep:" + totalStep);
+                    // 今天到现在时间为止总步数
+                    byte[] totalStepTemp = new byte[]{value[16], value[15], value[14], value[13]};
+                    int totalStep = HexUtil.byte4ToInt(totalStepTemp);
+
+                    Log.d("BLEService2", "读取的前几天步数 time:" + time * 3600 + " ebc:" + ebc + " distance: " + distance + " calorie:" + calorie + " exerciseTime:" + exerciseTime + " totalStep:" + totalStep);
                 } else if (value[0] == (byte) 0x88) {
                     int min = (int) value[1];
                     int hour = (int) value[2];
@@ -285,6 +323,49 @@ public class BLEService2 extends Service {
                     Log.d("BLEService2", "睡眠时间 记录的时间 " + time + " " + hour + ":" + min + " 睡眠状态:" + statueDesp);
                 } else if (value[0] == (byte) 0x9B) {
                     Log.d("BLEService2", "睡眠时间 没有数据了");
+                } else if (value[0] == (byte) 0x8D || value[0] == (byte) 0x8E || value[0] == (byte) 0x8F) {
+                    String mode = "";
+                    if (value[1] == 0x01) {
+                        mode = "跑步模式";
+                    } else if (value[1] == 0x02) {
+                        mode = "快走模式";
+                    } else if (value[1] == 0x03) {
+                        mode = "游泳模式";
+                    }
+
+                    int time = (int) (value[2]);
+
+                    int startMin = (int) (value[3]);
+
+                    int startHour = (int) (value[4]);
+
+                    int endMin = (int) (value[5]);
+
+                    int endHour = (int) (value[6]);
+
+                    int heartRate = (int) (value[7]);
+
+                    // 运动步数
+                    byte[] exerciseStepTemp = new byte[2];
+                    exerciseStepTemp[0] = value[10];
+                    exerciseStepTemp[1] = value[9];
+                    int exerciseStep = HexUtil.byte2ToInt(exerciseStepTemp);
+
+                    // 运动距离
+                    byte[] exerciseDistanceTemp = new byte[2];
+                    exerciseDistanceTemp[0] = value[12];
+                    exerciseDistanceTemp[1] = value[11];
+                    int exerciseDistance = HexUtil.byte2ToInt(exerciseDistanceTemp);
+
+                    // 运动消耗的卡路里
+                    byte[] calorieTemp = new byte[2];
+                    calorieTemp[0] = value[14];
+                    calorieTemp[1] = value[13];
+                    int calorie = HexUtil.byte2ToInt(calorieTemp);
+
+                    Log.d("BLEService2", "读取运动模式:" + mode + " 日期:" + time + " 开始时间为:" + startHour + ":" + startMin +
+                            " 结束时间为:" + endHour + ":" + endMin + " heartRate:" + heartRate +
+                            " 运动步数:" + exerciseStep + " 运动距离:" + exerciseDistance + " 运动消耗的卡路里:" + calorie);
                 } else if (value[0] == (byte) 0x2C) {
                     Log.d("BLEService2", "用户信息写入成功");
                 } else if (value[0] == (byte) 0x30) {
@@ -632,14 +713,18 @@ public class BLEService2 extends Service {
         bytes[0] = (byte) 0xC0;
         bytes[1] = (byte) calendar.get(Calendar.SECOND);
         bytes[2] = (byte) calendar.get(Calendar.MINUTE);
-        bytes[3] = (byte) calendar.get(Calendar.HOUR);
-        if (calendar.get(Calendar.HOUR) > 0 && calendar.get(Calendar.HOUR) < 12) {
+        bytes[3] = (byte) calendar.get(Calendar.HOUR_OF_DAY);
+        if (calendar.get(Calendar.HOUR_OF_DAY) > 0 && calendar.get(Calendar.HOUR_OF_DAY) < 12) {
             bytes[4] = (byte) 0;
         } else {
             bytes[4] = (byte) 1;
         }
         bytes[5] = (byte) 0;
-        bytes[6] = (byte) calendar.get(Calendar.DAY_OF_WEEK);
+        if (calendar.get(Calendar.DAY_OF_WEEK) == 1) {
+            bytes[6] = 7;
+        } else {
+            bytes[6] = (byte) (calendar.get(Calendar.DAY_OF_WEEK) - 1);
+        }
         bytes[7] = (byte) calendar.get(Calendar.DAY_OF_MONTH);
         bytes[8] = (byte) (calendar.get(Calendar.MONTH) + 1);
         bytes[9] = (byte) Integer.parseInt(("" + calendar.get(Calendar.YEAR)).substring(2, 4));
@@ -724,6 +809,27 @@ public class BLEService2 extends Service {
      */
     public static void sleepTime(Context context) {
         sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x9A, context);
+    }
+
+    /**
+     * 读取跑步模式的运动数据
+     */
+    public static void sportsRun(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x8D, context);
+    }
+
+    /**
+     * 读取快走模式的运动数据
+     */
+    public static void sportsFastWalk(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x8E, context);
+    }
+
+    /**
+     * 读取游泳模式的运动数据
+     */
+    public static void sportsSwim(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x8F, context);
     }
 
     /**
@@ -1110,14 +1216,12 @@ public class BLEService2 extends Service {
                                 "每天 " +
                                 (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
                                 (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
-                    }
-                    else if (allChoiceWeeks.size() == 1) {
+                    } else if (allChoiceWeeks.size() == 1) {
                         Log.d("BLEService2", desp + " " +
                                 "每周 " +
                                 (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
                                 (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
-                    }
-                    else {
+                    } else {
                         StringBuilder repeat = new StringBuilder();
                         for (Integer choiceWeek : allChoiceWeeks) {
                             switch (choiceWeek) {
