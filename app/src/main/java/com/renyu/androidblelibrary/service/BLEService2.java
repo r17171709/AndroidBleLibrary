@@ -301,26 +301,35 @@ public class BLEService2 extends Service {
                     int fastRate = (int) value[9];
                     Log.d("BLEService2", "读取心率 记录的时间 " + hour + ":" + min + " 心率:" + rate);
                 }
-                // 睡眠时间，表示还有数据
-                // 睡眠时间，表示没有数据了，后面Byte[1]-[4]有效
-                else if (value[0] == (byte) 0x99 || value[0] == (byte) 0x9A) {
-                    int time = (int) value[1];
-                    int min = (int) value[2];
-                    int hour = (int) value[3];
-                    String statueDesp = "";
-                    int statue = (int) value[4];
-                    if (statue == 0x01) {
-                        statueDesp = "入睡";
-                    } else if (statue == 0x02) {
-                        statueDesp = "浅睡";
-                    } else if (statue == 0x03) {
-                        statueDesp = "深睡";
-                    } else if (statue == 0x04) {
-                        statueDesp = "中途清醒";
-                    } else if (statue == 0x05) {
-                        statueDesp = "醒来";
+                // 睡眠时间
+                else if (value[0] == (byte) 0x9A) {
+                    int last = (int) value[2];
+
+                    if (last == 1) {
+                        // 有数据
+                    } else if (last == 0) {
+                        // 没有数据
                     }
-                    Log.d("BLEService2", "睡眠时间 记录的时间 " + time + " " + hour + ":" + min + " 睡眠状态:" + statueDesp);
+
+                    int time = (int) value[1];
+
+                    // 入睡时间
+                    int startHour = (int) value[4];
+                    int startMinute = (int) value[3];
+
+                    // 入睡时间
+                    int wakeupHour = (int) value[6];
+                    int wakeupMinute = (int) value[5];
+
+                    // 入睡时间
+                    int lightHour = (int) value[8];
+                    int lightMinute = (int) value[7];
+
+                    // 入睡时间
+                    int deepHour = (int) value[10];
+                    int deepMinute = (int) value[9];
+
+                    Log.d("BLEService2", "睡眠时间 记录的时间 " + time);
                 } else if (value[0] == (byte) 0x9B) {
                     Log.d("BLEService2", "睡眠时间 没有数据了");
                 } else if (value[0] == (byte) 0x8D || value[0] == (byte) 0x8E || value[0] == (byte) 0x8F) {
@@ -395,6 +404,59 @@ public class BLEService2 extends Service {
                         }
                     }
                     Log.d("BLEService2", "读取到的闹钟信息数量为:" + alarms.size());
+                    for (Integer alarm : alarms) {
+                        readAlarm(BLEService2.this, alarm);
+                    }
+                } else if (value[0] == (byte) 0xB6) {
+                    eventOper(value);
+                } else if (value[0] == (byte) 0xB8) {
+                    int theme = (int) value[1];
+
+                    int hasDownloadTheme = (int) value[2];
+
+                    int light = (int) value[3];
+
+                    boolean isOpenHeart = (int) value[4] == 1;
+
+                    boolean noDisturb = (int) value[5] == 1;
+                    int noDisturbStartHour = (int) value[7];
+                    int noDisturbStartMinute = (int) value[6];
+                    int noDisturbEndHour = (int) value[9];
+                    int noDisturbEndMinute = (int) value[8];
+
+
+                    int sleepStartHour = (int) value[11];
+                    int sleepStartMinute = (int) value[10];
+                    int sleepEndHour = (int) value[13];
+                    int sleepEndMinute = (int) value[12];
+
+                    boolean isTarget = (int) value[14] == 1;
+                } else if (value[0] == (byte) 0x3E) {
+                    Log.d("BLEService2", "久坐提醒设置成功");
+                } else if (value[0] == (byte) 0x3F) {
+                    Log.d("BLEService2", "久坐提醒设置失败");
+                } else if (value[0] == (byte) 0x20) {
+                    Log.d("BLEService2", "背光设置成功");
+                } else if (value[0] == (byte) 0x21) {
+                    Log.d("BLEService2", "背光设置失败");
+                } else if (value[0] == (byte) 0x24) {
+                    Log.d("BLEService2", "主题设置成功");
+                } else if (value[0] == (byte) 0x25) {
+                    Log.d("BLEService2", "主题设置失败");
+                } else if (value[0] == (byte) 0x28) {
+                    Log.d("BLEService2", "勿扰设置成功");
+                } else if (value[0] == (byte) 0x29) {
+                    Log.d("BLEService2", "勿扰设置成功");
+                } else if (value[0] == (byte) 0x2E) {
+                    Log.d("BLEService2", "解绑成功");
+                } else if (value[0] == (byte) 0x2F) {
+                    Log.d("BLEService2", "解绑失败");
+                } else if (value[0] == (byte) 0x3C) {
+                    Log.d("BLEService2", "达标提醒成功");
+                } else if (value[0] == (byte) 0x3D) {
+                    Log.d("BLEService2", "达标提醒失败");
+                } else if (value[0] == (byte) 0x1A) {
+                    Log.d("BLEService2", "电池电量：" + (int) value[1]);
                 }
             }
         });
@@ -857,7 +919,7 @@ public class BLEService2 extends Service {
      * @param repeatType
      * @param content
      */
-    private static void event(Context context, int operType, int no, long time, int repeatType, String content) {
+    private static void event(Context context, int operType, int no, boolean open, long time, int repeatType, String content) {
         SimpleDateFormat format = new SimpleDateFormat("HH", Locale.CHINA);
         int hour = Integer.parseInt(format.format(new Date(time)));
         format = new SimpleDateFormat("mm", Locale.CHINA);
@@ -866,30 +928,31 @@ public class BLEService2 extends Service {
         int day = Integer.parseInt(format.format(new Date(time)));
         format = new SimpleDateFormat("MM", Locale.CHINA);
         int month = Integer.parseInt(format.format(new Date(time)));
-        byte[] bytes = new byte[11 + content.getBytes().length];
+        byte[] bytes = new byte[12 + content.getBytes().length];
         bytes[0] = (byte) 0xB0;
         bytes[1] = (byte) operType;
         bytes[2] = (byte) no;
         bytes[3] = (byte) 0;
-        bytes[4] = (byte) minute;
-        bytes[5] = (byte) hour;
-        bytes[6] = (byte) repeatType;
-        bytes[7] = (byte) 0;
-        bytes[8] = (byte) day;
-        bytes[9] = (byte) month;
-        bytes[10] = (byte) content.getBytes().length;
+        bytes[4] = (byte) (open ? 1 : 0);
+        bytes[5] = (byte) minute;
+        bytes[6] = (byte) hour;
+        bytes[7] = (byte) repeatType;
+        bytes[8] = (byte) 0;
+        bytes[9] = (byte) day;
+        bytes[10] = (byte) month;
+        bytes[11] = (byte) content.getBytes().length;
         for (int i = 0; i < content.getBytes().length; i++) {
-            bytes[11 + i] = content.getBytes()[i];
+            bytes[12 + i] = content.getBytes()[i];
         }
         sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
     }
 
-    public static void eventAdd(Context context, int no, long time, int repeatType, String content) {
-        event(context, 0, no, time, repeatType, content);
+    public static void eventAdd(Context context, int no, boolean open, long time, int repeatType, String content) {
+        event(context, 0, no, open, time, repeatType, content);
     }
 
-    public static void eventUpdate(Context context, int no, long time, int repeatType, String content) {
-        event(context, 1, no, time, repeatType, content);
+    public static void eventUpdate(Context context, int no, boolean open, long time, int repeatType, String content) {
+        event(context, 1, no, open, time, repeatType, content);
     }
 
     public static void eventDelete(Context context, int no) {
@@ -911,7 +974,7 @@ public class BLEService2 extends Service {
      * @param repeatType
      * @param sleep
      */
-    private static void alarmClock(Context context, int operType, int no, long time, int repeatType, int sleep) {
+    private static void alarmClock(Context context, int operType, int no, boolean open, long time, int repeatType, boolean sleep) {
         SimpleDateFormat format = new SimpleDateFormat("HH", Locale.CHINA);
         int hour = Integer.parseInt(format.format(new Date(time)));
         format = new SimpleDateFormat("mm", Locale.CHINA);
@@ -920,31 +983,25 @@ public class BLEService2 extends Service {
         int day = Integer.parseInt(format.format(new Date(time)));
         format = new SimpleDateFormat("MM", Locale.CHINA);
         int month = Integer.parseInt(format.format(new Date(time))) + 1;
-        byte[] bytes;
-        if (repeatType != 0x00) {
-            bytes = new byte[8];
-        } else {
-            bytes = new byte[10];
-            bytes[8] = (byte) day;
-            bytes[9] = (byte) month;
-        }
+        byte[] bytes = new byte[9];
         bytes[0] = (byte) 0xB0;
         bytes[1] = (byte) operType;
         bytes[2] = (byte) no;
         bytes[3] = (byte) 2;
-        bytes[4] = (byte) minute;
-        bytes[5] = (byte) hour;
-        bytes[6] = (byte) repeatType;
-        bytes[7] = (byte) sleep;
+        bytes[4] = (byte) (open ? 1 : 0);
+        bytes[5] = (byte) minute;
+        bytes[6] = (byte) hour;
+        bytes[7] = (byte) repeatType;
+        bytes[8] = (byte) (sleep ? 1 : 0);
         sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
     }
 
-    public static void alarmClockAdd(Context context, int no, long time, int repeatType, int sleep) {
-        alarmClock(context, 0, no, time, repeatType, sleep);
+    public static void alarmClockAdd(Context context, int no, boolean open, long time, int repeatType, boolean sleep) {
+        alarmClock(context, 0, no, open, time, repeatType, sleep);
     }
 
-    public static void alarmClockUpdate(Context context, int no, long time, int repeatType, int sleep) {
-        alarmClock(context, 1, no, time, repeatType, sleep);
+    public static void alarmClockUpdate(Context context, int no, boolean open, long time, int repeatType, boolean sleep) {
+        alarmClock(context, 1, no, open, time, repeatType, sleep);
     }
 
     public static void alarmClockDelete(Context context, int no) {
@@ -965,28 +1022,29 @@ public class BLEService2 extends Service {
      * @param time
      * @param repeatType
      */
-    private static void sedentaryByAlarm(Context context, int operType, int no, long time, int repeatType) {
+    private static void sedentaryByAlarm(Context context, int operType, int no, boolean open, long time, int repeatType) {
         SimpleDateFormat format = new SimpleDateFormat("HH", Locale.CHINA);
         int hour = Integer.parseInt(format.format(new Date(time)));
         format = new SimpleDateFormat("mm", Locale.CHINA);
         int minute = Integer.parseInt(format.format(new Date(time)));
-        byte[] bytes = new byte[7];
+        byte[] bytes = new byte[8];
         bytes[0] = (byte) 0xB0;
         bytes[1] = (byte) operType;
         bytes[2] = (byte) no;
         bytes[3] = (byte) 1;
-        bytes[4] = (byte) minute;
-        bytes[5] = (byte) hour;
-        bytes[6] = (byte) repeatType;
+        bytes[4] = (byte) (open ? 1 : 0);
+        bytes[5] = (byte) minute;
+        bytes[6] = (byte) hour;
+        bytes[7] = (byte) repeatType;
         sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
     }
 
-    public static void sedentaryByAlarmAdd(Context context, int no, long time, int repeatType) {
-        sedentaryByAlarm(context, 0, no, time, repeatType);
+    public static void sedentaryByAlarmAdd(Context context, int no, boolean open, long time, int repeatType) {
+        sedentaryByAlarm(context, 0, no, open, time, repeatType);
     }
 
-    public static void sedentaryByAlarmUpdate(Context context, int no, long time, int repeatType) {
-        sedentaryByAlarm(context, 1, no, time, repeatType);
+    public static void sedentaryByAlarmUpdate(Context context, int no, boolean open, long time, int repeatType) {
+        sedentaryByAlarm(context, 1, no, open, time, repeatType);
     }
 
     public static void sedentaryByAlarmDelete(Context context, int no) {
@@ -1012,28 +1070,15 @@ public class BLEService2 extends Service {
     }
 
     /**
-     * 久坐提醒 间隔式提醒 切换状态
+     * 久坐提醒 间隔式久坐提醒设置
      *
      * @param context
      * @param minute
      */
     public static void sedentaryByIntervalSetting(Context context, int minute) {
-        byte[] bytes = new byte[3];
+        byte[] bytes = new byte[2];
         bytes[0] = (byte) 0xA6;
-        bytes[1] = (byte) 0;
-        bytes[2] = (byte) minute;
-        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
-    }
-
-    /**
-     * 久坐提醒 闹钟式提醒 切换状态
-     *
-     * @param context
-     */
-    public static void sedentaryByAlarmSetting(Context context) {
-        byte[] bytes = new byte[3];
-        bytes[0] = (byte) 0xA6;
-        bytes[1] = (byte) 1;
+        bytes[1] = (byte) minute;
         sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
     }
 
@@ -1044,6 +1089,16 @@ public class BLEService2 extends Service {
      */
     public static void sedentaryReminder(Context context) {
         sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, new byte[]{(byte) 0xBB}, context);
+    }
+
+    /**
+     * 设置久坐提醒配置信息
+     *
+     * @param context
+     * @param value
+     */
+    public static void settingSedentaryReminder(Context context, int value) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, new byte[]{(byte) 0xBE, (byte) value}, context);
     }
 
     /**
@@ -1090,6 +1145,19 @@ public class BLEService2 extends Service {
     }
 
     /**
+     * 达标提醒
+     *
+     * @param context
+     * @param num
+     */
+    public static void targetNotify(Context context, int num) {
+        byte[] bytes = new byte[2];
+        bytes[0] = (byte) 0xBC;
+        bytes[1] = (byte) num;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
      * 更换主题
      *
      * @param context
@@ -1103,51 +1171,96 @@ public class BLEService2 extends Service {
     }
 
     /**
+     * 解绑
+     * @param context
+     */
+    public static void unBind(Context context) {
+        byte[] bytes = new byte[1];
+        bytes[0] = (byte) 0xAE;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
+     * 读取手环一些信息
+     * @param context
+     */
+    public static void readDeviceInfo(Context context) {
+        byte[] bytes = new byte[1];
+        bytes[0] = (byte) 0xB8;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, bytes, context);
+    }
+
+    /**
+     * 读取电池电量
+     * @param context
+     */
+    public static void readDeviceBattery(Context context) {
+        byte[] bytes = new byte[1];
+        bytes[0] = (byte) 0xB9;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, bytes, context);
+    }
+
+    /**
      * 事件提醒处理
      *
      * @param values
      */
     private void eventOper(byte[] values) {
-        int num = (int) values[0];
+        int num = (int) values[1];
 
-        byte[] despByte = new byte[values.length - 9];
-        for (int i = 9; i < values.length; i++) {
-            despByte[i - 9] = values[i];
+        int type = (int) values[2];
+        if (type == 0) {
+            // 事件提醒
+        } else if (type == 1) {
+            // 闹钟式久坐提醒提醒
+        } else if (type == 2) {
+            // 普通闹钟
+        }
+
+        boolean isOpen = (int) values[3] == 1;
+
+        int min = (int) values[4];
+
+        int hour = (int) values[5];
+
+        byte[] despByte = new byte[(int) values[10]];
+        for (int i = 11; i < (11 + (int) values[10]); i++) {
+            despByte[i - 11] = values[i];
         }
         String desp = new String(despByte).trim();
 
         ArrayList<Integer> allChoiceWeeks = new ArrayList<>();
-        if ((values[4] & 0x81) == 0x81) {
+        if ((values[6] & 0x81) == 0x81) {
             // 包含星期一
             allChoiceWeeks.add(2);
         }
-        if ((values[4] & 0x82) == 0x82) {
+        if ((values[6] & 0x82) == 0x82) {
             // 包含星期二
             allChoiceWeeks.add(3);
         }
-        if ((values[4] & 0x84) == 0x84) {
+        if ((values[6] & 0x84) == 0x84) {
             // 包含星期三
             allChoiceWeeks.add(4);
         }
-        if ((values[4] & 0x88) == 0x88) {
+        if ((values[6] & 0x88) == 0x88) {
             // 包含星期四
             allChoiceWeeks.add(5);
         }
-        if ((values[4] & 0x90) == 0x90) {
+        if ((values[6] & 0x90) == 0x90) {
             // 包含星期五
             allChoiceWeeks.add(6);
         }
-        if ((values[4] & 0xA0) == 0xA0) {
+        if ((values[6] & 0xA0) == 0xA0) {
             // 包含星期六
             allChoiceWeeks.add(7);
         }
-        if ((values[4] & 0xC0) == 0xC0) {
+        if ((values[6] & 0xC0) == 0xC0) {
             // 包含星期天
             allChoiceWeeks.add(1);
         }
         // 只提醒一次，每月，每年
         if (allChoiceWeeks.size() == 0) {
-            int repeat = (int) values[4];
+            int repeat = (int) values[6];
 
             if (repeat == (byte) 0x00) {
                 // 一次
@@ -1202,7 +1315,7 @@ public class BLEService2 extends Service {
                 }
             }
         }
-        // 每周X
+        // 每周
         else {
             boolean isEnd = false;
             Calendar calendar = Calendar.getInstance();

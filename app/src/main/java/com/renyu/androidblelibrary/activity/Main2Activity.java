@@ -58,6 +58,7 @@ public class Main2Activity extends AppCompatActivity {
         models.add("读取心率");
         models.add("睡眠时间");
         models.add("设置用户信息");
+        models.add("设置久坐提醒模式");
         models.add("读取久坐提醒配置信息");
         models.add("读取闹钟信息");
         models.add("事件提醒添加");
