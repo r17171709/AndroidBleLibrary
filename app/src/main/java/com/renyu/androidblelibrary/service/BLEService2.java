@@ -217,7 +217,7 @@ public class BLEService2 extends Service {
                     }
 
                     // 一小时内运动的时间（单位：分钟）
-                    int exerciseTime = (int) value[6];
+                    int exerciseTime = value[6] & 0xff;
 
                     // 平均心率（开启实时心率有效，否则为0）
                     int heartRate = (int) value[7];
@@ -304,7 +304,6 @@ public class BLEService2 extends Service {
                 // 睡眠时间
                 else if (value[0] == (byte) 0x9A) {
                     int last = (int) value[2];
-
                     if (last == 1) {
                         // 有数据
                     } else if (last == 0) {
@@ -317,21 +316,19 @@ public class BLEService2 extends Service {
                     int startHour = (int) value[4];
                     int startMinute = (int) value[3];
 
-                    // 入睡时间
+                    // 醒来时间
                     int wakeupHour = (int) value[6];
                     int wakeupMinute = (int) value[5];
 
-                    // 入睡时间
+                    // 浅睡时长
                     int lightHour = (int) value[8];
                     int lightMinute = (int) value[7];
 
-                    // 入睡时间
+                    // 深睡时长
                     int deepHour = (int) value[10];
                     int deepMinute = (int) value[9];
 
-                    Log.d("BLEService2", "睡眠时间 记录的时间 " + time);
-                } else if (value[0] == (byte) 0x9B) {
-                    Log.d("BLEService2", "睡眠时间 没有数据了");
+                    Log.d("BLEService2", "睡眠时间 记录的时间 " + time + " " + startHour + ":" + startMinute + " " + wakeupHour + ":" + wakeupMinute);
                 } else if (value[0] == (byte) 0x8D || value[0] == (byte) 0x8E || value[0] == (byte) 0x8F) {
                     String mode = "";
                     if (value[1] == 0x01) {
@@ -352,7 +349,7 @@ public class BLEService2 extends Service {
 
                     int endHour = (int) (value[6]);
 
-                    int heartRate = (int) (value[7]);
+                    int heartRate = value[7] & 0xff;
 
                     // 运动步数
                     byte[] exerciseStepTemp = new byte[2];
@@ -408,7 +405,7 @@ public class BLEService2 extends Service {
                         readAlarm(BLEService2.this, alarm);
                     }
                 } else if (value[0] == (byte) 0xB6) {
-                    eventOper(value);
+                    Log.d("BLEService2", "读取到的闹钟/事件提醒");
                 } else if (value[0] == (byte) 0xB8) {
                     int theme = (int) value[1];
 
@@ -1057,6 +1054,15 @@ public class BLEService2 extends Service {
     }
 
     /**
+     * 读取闹钟信息
+     *
+     * @param context
+     */
+    public static void allAlarmInfo(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, new byte[]{(byte) 0xBA}, context);
+    }
+
+    /**
      * 按编号读取闹钟时间
      *
      * @param context
@@ -1099,15 +1105,6 @@ public class BLEService2 extends Service {
      */
     public static void settingSedentaryReminder(Context context, int value) {
         sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, new byte[]{(byte) 0xBE, (byte) value}, context);
-    }
-
-    /**
-     * 读取闹钟信息
-     *
-     * @param context
-     */
-    public static void allAlarmInfo(Context context) {
-        sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, new byte[]{(byte) 0xBA}, context);
     }
 
     /**
@@ -1172,6 +1169,7 @@ public class BLEService2 extends Service {
 
     /**
      * 解绑
+     *
      * @param context
      */
     public static void unBind(Context context) {
@@ -1182,6 +1180,7 @@ public class BLEService2 extends Service {
 
     /**
      * 读取手环一些信息
+     *
      * @param context
      */
     public static void readDeviceInfo(Context context) {
@@ -1192,194 +1191,12 @@ public class BLEService2 extends Service {
 
     /**
      * 读取电池电量
+     *
      * @param context
      */
     public static void readDeviceBattery(Context context) {
         byte[] bytes = new byte[1];
         bytes[0] = (byte) 0xB9;
         sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, bytes, context);
-    }
-
-    /**
-     * 事件提醒处理
-     *
-     * @param values
-     */
-    private void eventOper(byte[] values) {
-        int num = (int) values[1];
-
-        int type = (int) values[2];
-        if (type == 0) {
-            // 事件提醒
-        } else if (type == 1) {
-            // 闹钟式久坐提醒提醒
-        } else if (type == 2) {
-            // 普通闹钟
-        }
-
-        boolean isOpen = (int) values[3] == 1;
-
-        int min = (int) values[4];
-
-        int hour = (int) values[5];
-
-        byte[] despByte = new byte[(int) values[10]];
-        for (int i = 11; i < (11 + (int) values[10]); i++) {
-            despByte[i - 11] = values[i];
-        }
-        String desp = new String(despByte).trim();
-
-        ArrayList<Integer> allChoiceWeeks = new ArrayList<>();
-        if ((values[6] & 0x81) == 0x81) {
-            // 包含星期一
-            allChoiceWeeks.add(2);
-        }
-        if ((values[6] & 0x82) == 0x82) {
-            // 包含星期二
-            allChoiceWeeks.add(3);
-        }
-        if ((values[6] & 0x84) == 0x84) {
-            // 包含星期三
-            allChoiceWeeks.add(4);
-        }
-        if ((values[6] & 0x88) == 0x88) {
-            // 包含星期四
-            allChoiceWeeks.add(5);
-        }
-        if ((values[6] & 0x90) == 0x90) {
-            // 包含星期五
-            allChoiceWeeks.add(6);
-        }
-        if ((values[6] & 0xA0) == 0xA0) {
-            // 包含星期六
-            allChoiceWeeks.add(7);
-        }
-        if ((values[6] & 0xC0) == 0xC0) {
-            // 包含星期天
-            allChoiceWeeks.add(1);
-        }
-        // 只提醒一次，每月，每年
-        if (allChoiceWeeks.size() == 0) {
-            int repeat = (int) values[6];
-
-            if (repeat == (byte) 0x00) {
-                // 一次
-                boolean isEnd = false;
-                // 判断当前时间是否为今天
-                Calendar calendar = Calendar.getInstance();
-                int month = calendar.get(Calendar.MONTH) + 1;
-                int day = calendar.get(Calendar.DAY_OF_MONTH);
-                if (month == values[7] && day == values[6]) {
-                    isEnd = todayCompare(calendar, values);
-                }
-                // 同月份天数小
-                else if (month == values[7] && day > values[6]) {
-                    isEnd = true;
-                }
-                // 月份小
-                else if (month > values[7]) {
-                    isEnd = true;
-                }
-
-                Log.d("BLEService2", desp + " " +
-                        "只提醒一次 " +
-                        (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
-                        (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
-            } else if (repeat == (byte) 0x01) {
-                // 每月
-                boolean isEnd = false;
-                Calendar calendar = Calendar.getInstance();
-                int day = calendar.get(Calendar.DAY_OF_MONTH);
-                if (day == values[6]) {
-                    isEnd = todayCompare(calendar, values);
-
-                    Log.d("BLEService2", desp + " " +
-                            "每月 " +
-                            (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
-                            (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
-                }
-
-            } else if (repeat == (byte) 0x02) {
-                // 每年
-                boolean isEnd = false;
-                Calendar calendar = Calendar.getInstance();
-                int month = calendar.get(Calendar.MONTH) + 1;
-                int day = calendar.get(Calendar.DAY_OF_MONTH);
-                if (month == values[7] && day == values[6]) {
-                    isEnd = todayCompare(calendar, values);
-
-                    Log.d("BLEService2", desp + " " +
-                            "每年 " +
-                            (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
-                            (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
-                }
-            }
-        }
-        // 每周
-        else {
-            boolean isEnd = false;
-            Calendar calendar = Calendar.getInstance();
-            int week = calendar.get(Calendar.DAY_OF_WEEK);
-            for (Integer allChoiceWeek : allChoiceWeeks) {
-                if (allChoiceWeek == week) {
-                    isEnd = todayCompare(calendar, values);
-
-                    if (allChoiceWeeks.size() == 7) {
-                        Log.d("BLEService2", desp + " " +
-                                "每天 " +
-                                (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
-                                (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
-                    } else if (allChoiceWeeks.size() == 1) {
-                        Log.d("BLEService2", desp + " " +
-                                "每周 " +
-                                (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
-                                (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
-                    } else {
-                        StringBuilder repeat = new StringBuilder();
-                        for (Integer choiceWeek : allChoiceWeeks) {
-                            switch (choiceWeek) {
-                                case 1:
-                                    repeat.append("周日 ");
-                                    break;
-                                case 2:
-                                    repeat.append("周一 ");
-                                    break;
-                                case 3:
-                                    repeat.append("周二 ");
-                                    break;
-                                case 4:
-                                    repeat.append("周三 ");
-                                    break;
-                                case 5:
-                                    repeat.append("周四 ");
-                                    break;
-                                case 6:
-                                    repeat.append("周五 ");
-                                    break;
-                                case 7:
-                                    repeat.append("周六 ");
-                                    break;
-                            }
-                        }
-                        Log.d("BLEService2", desp + " " +
-                                repeat.toString() + " " +
-                                (calendar.get(Calendar.MONTH) + 1) + "月" + calendar.get(Calendar.DAY_OF_MONTH) + "日" +
-                                (values[3] < 10 ? "0" + values[3] : values[3]) + ":" + (values[2] < 10 ? "0" + values[2] : values[2]));
-                    }
-                }
-            }
-        }
-    }
-
-    private boolean todayCompare(Calendar calendar, byte[] values) {
-        boolean isEnd = false;
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
-        if (hour > values[3]) {
-            isEnd = true;
-        } else if (hour == values[3] && minute >= values[2]) {
-            isEnd = true;
-        }
-        return isEnd;
     }
 }
