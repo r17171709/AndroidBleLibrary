@@ -374,22 +374,6 @@ public class BLEService2 extends Service {
                             " 运动步数:" + exerciseStep + " 运动距离:" + exerciseDistance + " 运动消耗的卡路里:" + calorie);
                 } else if (value[0] == (byte) 0x2C) {
                     Log.d("BLEService2", "用户信息写入成功");
-                } else if (value[0] == (byte) 0x30) {
-                    Log.d("BLEService2", "事件设置成功");
-                } else if (value[0] == (byte) 0x31) {
-                    Log.d("BLEService2", "闹钟写入失败");
-                } else if (value[0] == (byte) 0x32) {
-                    Log.d("BLEService2", "添加时，该闹钟编码已存在");
-                } else if (value[0] == (byte) 0x33) {
-                    Log.d("BLEService2", "修改和删除时，该闹钟不存在");
-                } else if (value[0] == (byte) 0xBB) {
-                    int type = value[1];
-                    if (type == 1) {
-                        Log.d("BLEService2", "闹钟式提醒");
-                    } else if (type == 0) {
-                        int time = value[2];
-                        Log.d("BLEService2", "间隔式提醒，久坐提醒时常：" + time + "分钟");
-                    }
                 } else if (value[0] == (byte) 0xBA) {
                     ArrayList<Integer> alarms = new ArrayList<>();
                     for (int j = 1; j <= 13; j++) {
@@ -406,6 +390,30 @@ public class BLEService2 extends Service {
                     }
                 } else if (value[0] == (byte) 0xB6) {
                     Log.d("BLEService2", "读取到的闹钟/事件提醒");
+                } else if (value[0] == (byte) 0x30) {
+                    Log.d("BLEService2", "事件设置成功");
+                } else if (value[0] == (byte) 0x31) {
+                    Log.d("BLEService2", "闹钟写入失败");
+                } else if (value[0] == (byte) 0x32) {
+                    Log.d("BLEService2", "添加时，该闹钟编码已存在");
+                } else if (value[0] == (byte) 0x33) {
+                    Log.d("BLEService2", "修改和删除时，该闹钟不存在");
+                } else if (value[0] == (byte) 0xBB) {
+                    int type = value[1];
+                    if (type == 1) {
+                        Log.d("BLEService2", "闹钟式提醒");
+                    } else if (type == 0) {
+                        int time = value[2];
+                        Log.d("BLEService2", "间隔式提醒，久坐提醒时常：" + time + "分钟");
+                    }
+                } else if (value[0] == (byte) 0x3E) {
+                    Log.d("BLEService2", "久坐提醒设置成功");
+                } else if (value[0] == (byte) 0x3F) {
+                    Log.d("BLEService2", "久坐提醒设置失败");
+                } else if (value[0] == (byte) 0x26) {
+                    Log.d("BLEService2", "间隔式提醒时长设置成功");
+                } else if (value[0] == (byte) 0x27) {
+                    Log.d("BLEService2", "间隔式提醒时长设置失败");
                 } else if (value[0] == (byte) 0xB8) {
                     int theme = (int) value[1];
 
@@ -421,17 +429,12 @@ public class BLEService2 extends Service {
                     int noDisturbEndHour = (int) value[9];
                     int noDisturbEndMinute = (int) value[8];
 
-
                     int sleepStartHour = (int) value[11];
                     int sleepStartMinute = (int) value[10];
                     int sleepEndHour = (int) value[13];
                     int sleepEndMinute = (int) value[12];
-
-                    boolean isTarget = (int) value[14] == 1;
-                } else if (value[0] == (byte) 0x3E) {
-                    Log.d("BLEService2", "久坐提醒设置成功");
-                } else if (value[0] == (byte) 0x3F) {
-                    Log.d("BLEService2", "久坐提醒设置失败");
+                } else if (value[0] == (byte) 0xB9) {
+                    Log.d("BLEService2", "电池电量：" + (int) value[1]);
                 } else if (value[0] == (byte) 0x20) {
                     Log.d("BLEService2", "背光设置成功");
                 } else if (value[0] == (byte) 0x21) {
@@ -443,17 +446,15 @@ public class BLEService2 extends Service {
                 } else if (value[0] == (byte) 0x28) {
                     Log.d("BLEService2", "勿扰设置成功");
                 } else if (value[0] == (byte) 0x29) {
-                    Log.d("BLEService2", "勿扰设置成功");
-                } else if (value[0] == (byte) 0x2E) {
-                    Log.d("BLEService2", "解绑成功");
-                } else if (value[0] == (byte) 0x2F) {
-                    Log.d("BLEService2", "解绑失败");
+                    Log.d("BLEService2", "勿扰设置失败");
                 } else if (value[0] == (byte) 0x3C) {
                     Log.d("BLEService2", "达标提醒成功");
                 } else if (value[0] == (byte) 0x3D) {
                     Log.d("BLEService2", "达标提醒失败");
-                } else if (value[0] == (byte) 0x1A) {
-                    Log.d("BLEService2", "电池电量：" + (int) value[1]);
+                } else if (value[0] == (byte) 0x2E) {
+                    Log.d("BLEService2", "解绑成功");
+                } else if (value[0] == (byte) 0x2F) {
+                    Log.d("BLEService2", "解绑失败");
                 }
             }
         });
@@ -522,13 +523,17 @@ public class BLEService2 extends Service {
                 });
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.WRITE)) {
-                bleFramework.addWriteCommand((UUID) intent.getSerializableExtra(Params.SERVICEUUID),
-                        (UUID) intent.getSerializableExtra(Params.CHARACUUID),
-                        intent.getByteArrayExtra(Params.BYTECODE));
+                if (getBLEConnectModel().getBleState() == BLEFramework.STATE_SERVICES_DISCOVERED) {
+                    bleFramework.addWriteCommand((UUID) intent.getSerializableExtra(Params.SERVICEUUID),
+                            (UUID) intent.getSerializableExtra(Params.CHARACUUID),
+                            intent.getByteArrayExtra(Params.BYTECODE));
+                }
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.READ)) {
-                bleFramework.addReadCommand((UUID) intent.getSerializableExtra(Params.SERVICEUUID),
-                        (UUID) intent.getSerializableExtra(Params.CHARACUUID));
+                if (getBLEConnectModel().getBleState() == BLEFramework.STATE_SERVICES_DISCOVERED) {
+                    bleFramework.addReadCommand((UUID) intent.getSerializableExtra(Params.SERVICEUUID),
+                            (UUID) intent.getSerializableExtra(Params.CHARACUUID));
+                }
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.RSSI)) {
                 bleFramework.readRSSI();
@@ -976,10 +981,6 @@ public class BLEService2 extends Service {
         int hour = Integer.parseInt(format.format(new Date(time)));
         format = new SimpleDateFormat("mm", Locale.CHINA);
         int minute = Integer.parseInt(format.format(new Date(time)));
-        format = new SimpleDateFormat("dd", Locale.CHINA);
-        int day = Integer.parseInt(format.format(new Date(time)));
-        format = new SimpleDateFormat("MM", Locale.CHINA);
-        int month = Integer.parseInt(format.format(new Date(time))) + 1;
         byte[] bytes = new byte[9];
         bytes[0] = (byte) 0xB0;
         bytes[1] = (byte) operType;
@@ -1076,19 +1077,6 @@ public class BLEService2 extends Service {
     }
 
     /**
-     * 久坐提醒 间隔式久坐提醒设置
-     *
-     * @param context
-     * @param minute
-     */
-    public static void sedentaryByIntervalSetting(Context context, int minute) {
-        byte[] bytes = new byte[2];
-        bytes[0] = (byte) 0xA6;
-        bytes[1] = (byte) minute;
-        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
-    }
-
-    /**
      * 读取久坐提醒配置信息
      *
      * @param context
@@ -1108,24 +1096,38 @@ public class BLEService2 extends Service {
     }
 
     /**
-     * 勿扰模式
+     * 久坐提醒 间隔式久坐提醒设置
      *
      * @param context
-     * @param type
-     * @param startHour
-     * @param startMinute
-     * @param endHour
-     * @param endMinute
+     * @param minute
      */
-    public static void noDisturb(Context context, int type, int startHour, int startMinute, int endHour, int endMinute) {
-        byte[] bytes = new byte[6];
-        bytes[0] = (byte) 0xA8;
-        bytes[1] = (byte) type;
-        bytes[2] = (byte) startMinute;
-        bytes[3] = (byte) startHour;
-        bytes[4] = (byte) endMinute;
-        bytes[5] = (byte) endHour;
+    public static void sedentaryByIntervalSetting(Context context, int minute) {
+        byte[] bytes = new byte[2];
+        bytes[0] = (byte) 0xA6;
+        bytes[1] = (byte) minute;
         sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
+     * 读取手环一些信息
+     *
+     * @param context
+     */
+    public static void readDeviceInfo(Context context) {
+        byte[] bytes = new byte[1];
+        bytes[0] = (byte) 0xB8;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, bytes, context);
+    }
+
+    /**
+     * 读取电池电量
+     *
+     * @param context
+     */
+    public static void readDeviceBattery(Context context) {
+        byte[] bytes = new byte[1];
+        bytes[0] = (byte) 0xB9;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, bytes, context);
     }
 
     /**
@@ -1138,6 +1140,29 @@ public class BLEService2 extends Service {
         byte[] bytes = new byte[2];
         bytes[0] = (byte) 0xA0;
         bytes[1] = (byte) num;
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+    }
+
+    /**
+     * 勿扰模式
+     *
+     * @param context
+     * @param type
+     * @param startHour
+     * @param startMinute
+     * @param endHour
+     * @param endMinute
+     */
+    public static void noDisturb(Context context, int type, int startHour, int startMinute, int endHour, int endMinute) {
+        byte[] bytes = new byte[type != 1 ? 2 : 6];
+        bytes[0] = (byte) 0xA8;
+        bytes[1] = (byte) type;
+        if (type == 1) {
+            bytes[2] = (byte) startMinute;
+            bytes[3] = (byte) startHour;
+            bytes[4] = (byte) endMinute;
+            bytes[5] = (byte) endHour;
+        }
         sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
     }
 
@@ -1176,27 +1201,5 @@ public class BLEService2 extends Service {
         byte[] bytes = new byte[1];
         bytes[0] = (byte) 0xAE;
         sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
-    }
-
-    /**
-     * 读取手环一些信息
-     *
-     * @param context
-     */
-    public static void readDeviceInfo(Context context) {
-        byte[] bytes = new byte[1];
-        bytes[0] = (byte) 0xB8;
-        sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, bytes, context);
-    }
-
-    /**
-     * 读取电池电量
-     *
-     * @param context
-     */
-    public static void readDeviceBattery(Context context) {
-        byte[] bytes = new byte[1];
-        bytes[0] = (byte) 0xB9;
-        sendWriteCommand(Params.UUID_SERVICE_WristBand_READ, Params.UUID_SERVICE_WristBand_READWrite, bytes, context);
     }
 }
