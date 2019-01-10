@@ -64,11 +64,12 @@ public class Main2Activity extends AppCompatActivity {
         models.add("事件提醒添加");
         models.add("普通闹钟提醒添加");
         models.add("闹钟式久坐提醒添加");
-        models.add("勿扰模式");
         models.add("按编号读取闹钟时间");
         models.add("读取跑步模式的运动数据");
         models.add("读取快走模式的运动数据");
         models.add("读取游泳模式的运动数据");
+        models.add("读取手环一些信息");
+        models.add("勿扰模式");
 
         EventBus.getDefault().register(this);
 

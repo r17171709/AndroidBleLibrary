@@ -80,15 +80,17 @@ public class Main2Adapter extends RecyclerView.Adapter<Main2Adapter.MainViewHold
                 } else if (holder.getLayoutPosition() == 15) {
                     BLEService2.sedentaryByAlarmAdd(holder.itemView.getContext(), 51, true, System.currentTimeMillis(), 0x00);
                 } else if (holder.getLayoutPosition() == 16) {
-                    BLEService2.noDisturb(holder.itemView.getContext(), 1, 0, 22, 0, 6);
-                } else if (holder.getLayoutPosition() == 17) {
                     BLEService2.readAlarm(holder.itemView.getContext(), 9);
-                } else if (holder.getLayoutPosition() == 18) {
+                } else if (holder.getLayoutPosition() == 17) {
                     BLEService2.sportsRun(holder.itemView.getContext());
-                } else if (holder.getLayoutPosition() == 19) {
+                } else if (holder.getLayoutPosition() == 18) {
                     BLEService2.sportsFastWalk(holder.itemView.getContext());
-                } else if (holder.getLayoutPosition() == 20) {
+                } else if (holder.getLayoutPosition() == 19) {
                     BLEService2.sportsSwim(holder.itemView.getContext());
+                } else if (holder.getLayoutPosition() == 20) {
+                    BLEService2.readDeviceInfo(holder.itemView.getContext());
+                } else if (holder.getLayoutPosition() == 21) {
+                    BLEService2.noDisturb(holder.itemView.getContext(), 1, 0, 22, 0, 6);
                 }
             }
         });

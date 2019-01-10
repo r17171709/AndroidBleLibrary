@@ -417,22 +417,29 @@ public class BLEService2 extends Service {
                 } else if (value[0] == (byte) 0xB8) {
                     int theme = (int) value[1];
 
-                    int hasDownloadTheme = (int) value[2];
+                    int hasDownloadTheme1 = (int) value[2];
+                    int hasDownloadTheme2 = (int) value[3];
 
-                    int light = (int) value[3];
+                    int light = (int) value[4];
 
-                    boolean isOpenHeart = (int) value[4] == 1;
+                    boolean isOpenHeart = (int) value[5] == 1;
 
-                    boolean noDisturb = (int) value[5] == 1;
-                    int noDisturbStartHour = (int) value[7];
-                    int noDisturbStartMinute = (int) value[6];
-                    int noDisturbEndHour = (int) value[9];
-                    int noDisturbEndMinute = (int) value[8];
+                    boolean noDisturb = (int) value[6] == 1;
+                    int noDisturbStartHour = (int) value[8];
+                    int noDisturbStartMinute = (int) value[7];
+                    int noDisturbEndHour = (int) value[10];
+                    int noDisturbEndMinute = (int) value[9];
 
-                    int sleepStartHour = (int) value[11];
-                    int sleepStartMinute = (int) value[10];
-                    int sleepEndHour = (int) value[13];
-                    int sleepEndMinute = (int) value[12];
+                    int sleepStartHour = (int) value[12];
+                    int sleepStartMinute = (int) value[11];
+                    int sleepEndHour = (int) value[14];
+                    int sleepEndMinute = (int) value[13];
+
+                    boolean isOpenTarget = (int) value[15] == 1;
+                    byte[] targetNum = {value[17], value[16]};
+                    int target = HexUtil.byte2ToInt(targetNum);
+
+                    Log.d("BLEService2", "读取手环一些信息");
                 } else if (value[0] == (byte) 0xB9) {
                     Log.d("BLEService2", "电池电量：" + (int) value[1]);
                 } else if (value[0] == (byte) 0x20) {

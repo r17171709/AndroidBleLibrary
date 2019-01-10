@@ -6,7 +6,6 @@ import java.util.UUID;
  * Created by renyu on 16/3/9.
  */
 public class Params {
-
     // 设备精灵 OTA使用
     public static final UUID UUID_SERVICE_OTA = UUID.fromString("0a2be667-2416-4373-b583-1147d905e39f");
     public static final UUID UUID_SERVICE_OTA_WRITE = UUID.fromString("0000cdd2-0000-1000-8000-00805f9b34fb");
@@ -79,6 +78,9 @@ public class Params {
     public static final UUID UUID_SERVICE_WristBand_READ = UUID.fromString("0000cb25-0000-1000-8000-00805f9b34fb");
     public static final UUID UUID_SERVICE_WristBand_READWrite = UUID.fromString("00008402-0000-1000-8000-00805f9b34fb");
 
+    public static final UUID UUID_SERVICE_WristBand_App = UUID.fromString("0000dbc4-0000-1000-8000-00805f9b34fb");
+    public static final UUID UUID_SERVICE_WristBand_AppWrite1 = UUID.fromString("0000de9c-0000-1000-8000-00805f9b34fb");
+    public static final UUID UUID_SERVICE_WristBand_AppWrite2 = UUID.fromString("00004383-0000-1000-8000-00805f9b34fb");
 
     /**
      * 以下为自定义部分
