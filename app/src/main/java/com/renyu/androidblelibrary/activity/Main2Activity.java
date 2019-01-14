@@ -70,6 +70,7 @@ public class Main2Activity extends AppCompatActivity {
         models.add("读取游泳模式的运动数据");
         models.add("读取手环一些信息");
         models.add("勿扰模式");
+        models.add("App通知");
 
         EventBus.getDefault().register(this);
 

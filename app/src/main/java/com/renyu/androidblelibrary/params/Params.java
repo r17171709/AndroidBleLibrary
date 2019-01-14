@@ -78,9 +78,8 @@ public class Params {
     public static final UUID UUID_SERVICE_WristBand_READ = UUID.fromString("0000cb25-0000-1000-8000-00805f9b34fb");
     public static final UUID UUID_SERVICE_WristBand_READWrite = UUID.fromString("00008402-0000-1000-8000-00805f9b34fb");
 
-    public static final UUID UUID_SERVICE_WristBand_App = UUID.fromString("0000dbc4-0000-1000-8000-00805f9b34fb");
-    public static final UUID UUID_SERVICE_WristBand_AppWrite1 = UUID.fromString("0000de9c-0000-1000-8000-00805f9b34fb");
-    public static final UUID UUID_SERVICE_WristBand_AppWrite2 = UUID.fromString("00004383-0000-1000-8000-00805f9b34fb");
+    public static final UUID UUID_SERVICE_WristBand_AppNotify = UUID.fromString("0000dbc4-0000-1000-8000-00805f9b34fb");
+    public static final UUID UUID_SERVICE_WristBand_AppNotifyWrite = UUID.fromString("00004383-0000-1000-8000-00805f9b34fb");
 
     /**
      * 以下为自定义部分

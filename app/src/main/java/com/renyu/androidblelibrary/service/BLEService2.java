@@ -1209,4 +1209,32 @@ public class BLEService2 extends Service {
         bytes[0] = (byte) 0xAE;
         sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
     }
+
+    /**
+     * 发送App通知
+     * @param context
+     * @param no
+     * @param title
+     * @param content
+     * @param time
+     */
+    public static void sendAppNotify(Context context, int no, String title, String content, String time) {
+        byte[] bytes = new byte[content.getBytes().length + title.getBytes().length + 4 + 5];
+        bytes[0] = (byte) no;
+        bytes[1] = (byte) title.getBytes().length;
+        bytes[2] = (byte) content.getBytes().length;
+        bytes[3] = (byte) 5;
+        for (int i = 0; i < title.getBytes().length; i++) {
+            bytes[i + 4] = title.getBytes()[i];
+        }
+        for (int i = 0; i < content.getBytes().length; i++) {
+            bytes[i + title.getBytes().length + 4] = content.getBytes()[i];
+        }
+        bytes[content.getBytes().length + title.getBytes().length + 4] = time.getBytes()[0];
+        bytes[content.getBytes().length + title.getBytes().length + 4 + 1] = time.getBytes()[1];
+        bytes[content.getBytes().length + title.getBytes().length + 4 + 2] = time.getBytes()[2];
+        bytes[content.getBytes().length + title.getBytes().length + 4 + 3] = time.getBytes()[3];
+        bytes[content.getBytes().length + title.getBytes().length + 4 + 4] = time.getBytes()[4];
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_AppNotify, Params.UUID_SERVICE_WristBand_AppNotifyWrite, bytes, context);
+    }
 }

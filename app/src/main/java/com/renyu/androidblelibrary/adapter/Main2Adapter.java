@@ -91,6 +91,8 @@ public class Main2Adapter extends RecyclerView.Adapter<Main2Adapter.MainViewHold
                     BLEService2.readDeviceInfo(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 21) {
                     BLEService2.noDisturb(holder.itemView.getContext(), 1, 0, 22, 0, 6);
+                } else if (holder.getLayoutPosition() == 22) {
+                    BLEService2.sendAppNotify(holder.itemView.getContext(), 0x01, "测试1", "测试2", "12:13");
                 }
             }
         });
