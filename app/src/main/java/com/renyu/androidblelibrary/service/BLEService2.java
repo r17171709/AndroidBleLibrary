@@ -1237,4 +1237,44 @@ public class BLEService2 extends Service {
         bytes[content.getBytes().length + title.getBytes().length + 4 + 4] = time.getBytes()[4];
         sendWriteCommand(Params.UUID_SERVICE_WristBand_AppNotify, Params.UUID_SERVICE_WristBand_AppNotifyWrite, bytes, context);
     }
+
+    /**
+     * 手环型号
+     * @param context
+     */
+    public static void readName(Context context) {
+        sendReadCommand(Params.UUID_SERVICE_WristBand_DeviceInfo, Params.UUID_SERVICE_WristBand_DeviceInfoName, context);
+    }
+
+    /**
+     * 手环sn码
+     * @param context
+     */
+    public static void readSN(Context context) {
+        sendReadCommand(Params.UUID_SERVICE_WristBand_DeviceInfo, Params.UUID_SERVICE_WristBand_DeviceInfoSN, context);
+    }
+
+    /**
+     * 手环硬件版本
+     * @param context
+     */
+    public static void readHardware(Context context) {
+        sendReadCommand(Params.UUID_SERVICE_WristBand_DeviceInfo, Params.UUID_SERVICE_WristBand_DeviceInfoHardware, context);
+    }
+
+    /**
+     * 手环BLE版本
+     * @param context
+     */
+    public static void readFirmware(Context context) {
+        sendReadCommand(Params.UUID_SERVICE_WristBand_DeviceInfo, Params.UUID_SERVICE_WristBand_DeviceInfoFirmware, context);
+    }
+
+    /**
+     * 手环固件版本
+     * @param context
+     */
+    public static void readSoft(Context context) {
+        sendReadCommand(Params.UUID_SERVICE_WristBand_DeviceInfo, Params.UUID_SERVICE_WristBand_DeviceInfoSoft, context);
+    }
 }

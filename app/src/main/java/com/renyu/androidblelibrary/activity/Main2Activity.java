@@ -71,6 +71,11 @@ public class Main2Activity extends AppCompatActivity {
         models.add("读取手环一些信息");
         models.add("勿扰模式");
         models.add("App通知");
+        models.add("手环型号");
+        models.add("手环sn码");
+        models.add("手环硬件版本");
+        models.add("手环BLE版本");
+        models.add("手环固件版本");
 
         EventBus.getDefault().register(this);
 

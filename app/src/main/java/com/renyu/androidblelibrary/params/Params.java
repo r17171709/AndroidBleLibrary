@@ -81,6 +81,13 @@ public class Params {
     public static final UUID UUID_SERVICE_WristBand_AppNotify = UUID.fromString("0000dbc4-0000-1000-8000-00805f9b34fb");
     public static final UUID UUID_SERVICE_WristBand_AppNotifyWrite = UUID.fromString("00004383-0000-1000-8000-00805f9b34fb");
 
+    public static final UUID UUID_SERVICE_WristBand_DeviceInfo = UUID.fromString("0000180a-0000-1000-8000-00805f9b34fb");
+    public static final UUID UUID_SERVICE_WristBand_DeviceInfoName = UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb");
+    public static final UUID UUID_SERVICE_WristBand_DeviceInfoSN = UUID.fromString("00002a25-0000-1000-8000-00805f9b34fb");
+    public static final UUID UUID_SERVICE_WristBand_DeviceInfoHardware = UUID.fromString("00002a27-0000-1000-8000-00805f9b34fb");
+    public static final UUID UUID_SERVICE_WristBand_DeviceInfoFirmware = UUID.fromString("00002a26-0000-1000-8000-00805f9b34fb");
+    public static final UUID UUID_SERVICE_WristBand_DeviceInfoSoft = UUID.fromString("00002a80-0000-1000-8000-00805f9b34fb");
+
     /**
      * 以下为自定义部分
      */
