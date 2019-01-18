@@ -94,7 +94,25 @@ public class BLEService2 extends Service {
                 } else if (value[0] == (byte) 0x43) {
                     Log.d("BLEService2", "时间写入错误");
                 }
-                // 读取EBC和消耗的药瓶量
+                // 读取EBC
+                else if (value[0] == (byte) 0x9D) {
+                    // 上次同步后，产生的EBC
+                    byte[] lastEBCTemp = new byte[2];
+                    lastEBCTemp[0] = value[2];
+                    lastEBCTemp[1] = value[1];
+                    int lastEBC = HexUtil.byte2ToInt(lastEBCTemp);
+
+                    // 手环共产生的总EBC
+                    byte[] totalEBCTemp = new byte[4];
+                    totalEBCTemp[0] = value[8];
+                    totalEBCTemp[1] = value[7];
+                    totalEBCTemp[2] = value[6];
+                    totalEBCTemp[3] = value[5];
+                    int totalEBC = HexUtil.byte4ToInt(totalEBCTemp);
+
+                    Log.d("BLEService2", "上次同步后，产生的EBC: " + lastEBC + " 手环共产生的总EBC: " + totalEBC);
+                }
+                // 读取药瓶剩余量
                 else if (value[0] == (byte) 0x9F) {
                     // 药品1的编号
                     int b1 = (int) value[1];
@@ -116,31 +134,25 @@ public class BLEService2 extends Service {
                     int b5 = (int) value[9];
                     // 上次同步后，药品5的使用量
                     int b5_use = (int) value[10];
-                    // 上次同步后，产生的EBC
-                    byte[] totalEBCTemp = new byte[2];
-                    totalEBCTemp[0] = value[12];
-                    totalEBCTemp[1] = value[11];
-                    int totalEBC = HexUtil.byte2ToInt(totalEBCTemp);
-                    // 手环共产生的总积分
-                    byte[] totalScoreTemp = new byte[2];
-                    totalScoreTemp[0] = value[14];
-                    totalScoreTemp[1] = value[13];
-                    int totalScore = HexUtil.byte2ToInt(totalScoreTemp) + 65536 * ((int) value[15]);
-                    boolean isVerify = (value[1] | ~value[3]) == (int) value[16];
+
+                    boolean isVerify = (value[1] | ~value[3]) == (int) value[11];
                     Log.d("BLEService2", "药品1的编号" + b1 + ",上次同步后，药品1的使用量:" + b1_use + " " +
                             "药品2的编号" + b2 + ",上次同步后，药品2的使用量:" + b2_use + " " +
                             "药品3的编号" + b3 + ",上次同步后，药品3的使用量:" + b3_use + " " +
                             "药品4的编号" + b4 + ",上次同步后，药品4的使用量:" + b4_use + " " +
                             "药品5的编号" + b5 + ",上次同步后，药品5的使用量:" + b5_use + " " +
-                            "上次同步后，产生的EBC:" + totalEBC + " 手环共产生的总积分:" + totalScore + " " +
                             "校验:" + isVerify);
                 } else if (value[0] == (byte) 0x4C) {
-                    Log.d("BLEService2", "EBC写入成功");
+                    Log.d("BLEService2", "药瓶写入成功");
                 } else if (value[0] == (byte) 0x4D) {
-                    Log.d("BLEService2", "EBC加密数据长度有问题");
+                    Log.d("BLEService2", "药瓶加密数据长度有问题");
                 } else if (value[0] == (byte) 0x4E) {
-                    Log.d("BLEService2", "EBC验证码错误");
+                    Log.d("BLEService2", "药瓶验证码错误");
                 } else if (value[0] == (byte) 0x4F) {
+                    Log.d("BLEService2", "药瓶写入失败");
+                } else if (value[0] == (byte) 0x48) {
+                    Log.d("BLEService2", "EBC写入成功");
+                } else if (value[0] == (byte) 0x4B) {
                     Log.d("BLEService2", "EBC写入失败");
                 }
                 // 读取截止到当前时间总数据
@@ -810,10 +822,41 @@ public class BLEService2 extends Service {
     }
 
     /**
-     * 读取EBC和消耗的药瓶量
+     * 读取EBC
      */
     public static void readEBC(Context context) {
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x9D, context);
+    }
+
+    /**
+     * 读取药瓶
+     */
+    public static void readBottle(Context context) {
         sendWriteCommand(Params.UUID_SERVICE_WristBand_Data, Params.UUID_SERVICE_WristBand_DataWrite, (byte) 0x9F, context);
+    }
+
+    /**
+     * 写入EBC
+     *
+     * @param value
+     */
+    public static void setEBC(int value, Context context) {
+        byte[] nums = HexUtil.intToByte(value);
+        byte[] bytes = new byte[5];
+        bytes[0] = (byte) 0xC8;
+        if (nums.length > 0) {
+            bytes[4] = nums[0];
+        }
+        if (nums.length > 1) {
+            bytes[3] = nums[1];
+        }
+        if (nums.length > 2) {
+            bytes[2] = nums[2];
+        }
+        if (nums.length > 3) {
+            bytes[1] = nums[3];
+        }
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SpecialSet, Params.UUID_SERVICE_WristBand_SpecialSetWrite, bytes, context);
     }
 
     /**
@@ -829,28 +872,26 @@ public class BLEService2 extends Service {
      * @param b4_use
      * @param b5
      * @param b5_use
-     * @param totalScore
      */
-    public static void setEBC(int b1, int b1_use, int b2, int b2_use, int b3, int b3_use, int b4, int b4_use, int b5, int b5_use, int totalScore, Context context) {
+    public static void setBottle(int b1, int b1_use, int b2, int b2_use, int b3, int b3_use, int b4, int b4_use, int b5, int b5_use, Context context) {
         byte[] bytes = new byte[17];
         bytes[0] = (byte) 0xCC;
-        bytes[1] = (byte) 0xA5;
-        bytes[2] = (byte) b1;
-        bytes[3] = (byte) b1_use;
-        bytes[4] = (byte) b2;
-        bytes[5] = (byte) b2_use;
-        bytes[6] = (byte) b3;
-        bytes[7] = (byte) b3_use;
-        bytes[8] = (byte) b4;
-        bytes[9] = (byte) b4_use;
-        bytes[10] = (byte) b5;
-        bytes[11] = (byte) b5_use;
+        bytes[1] = (byte) b1;
+        bytes[2] = (byte) b1_use;
+        bytes[3] = (byte) b2;
+        bytes[4] = (byte) b2_use;
+        bytes[5] = (byte) b3;
+        bytes[6] = (byte) b3_use;
+        bytes[7] = (byte) b4;
+        bytes[8] = (byte) b4_use;
+        bytes[9] = (byte) b5;
+        bytes[10] = (byte) b5_use;
+        bytes[11] = (byte) 0;
         bytes[12] = (byte) 0;
-        byte[] totalScoreTemp = HexUtil.intToByte(totalScore);
-        bytes[13] = totalScoreTemp[1];
-        bytes[14] = totalScoreTemp[0];
+        bytes[13] = (byte) 0;
+        bytes[14] = (byte) 0;
         bytes[15] = (byte) 0;
-        bytes[16] = (byte) (bytes[1] | bytes[2] | bytes[4]);
+        bytes[16] = (byte) (bytes[1] | ~bytes[3]);
         sendWriteCommand(Params.UUID_SERVICE_WristBand_SpecialSet, Params.UUID_SERVICE_WristBand_SpecialSetWrite, bytes, context);
     }
 
@@ -915,7 +956,7 @@ public class BLEService2 extends Service {
         byte[] temp = HexUtil.intToByte(tatgetStep);
         bytes[4] = temp[1];
         bytes[5] = temp[0];
-        sendWriteCommand(Params.UUID_SERVICE_WristBand_SET, Params.UUID_SERVICE_WristBand_SetWrite, bytes, context);
+        sendWriteCommand(Params.UUID_SERVICE_WristBand_SpecialSet, Params.UUID_SERVICE_WristBand_SpecialSetWrite, bytes, context);
     }
 
     /**
@@ -1212,6 +1253,7 @@ public class BLEService2 extends Service {
 
     /**
      * 发送App通知
+     *
      * @param context
      * @param no
      * @param title
@@ -1240,6 +1282,7 @@ public class BLEService2 extends Service {
 
     /**
      * 手环型号
+     *
      * @param context
      */
     public static void readName(Context context) {
@@ -1248,6 +1291,7 @@ public class BLEService2 extends Service {
 
     /**
      * 手环sn码
+     *
      * @param context
      */
     public static void readSN(Context context) {
@@ -1256,6 +1300,7 @@ public class BLEService2 extends Service {
 
     /**
      * 手环硬件版本
+     *
      * @param context
      */
     public static void readHardware(Context context) {
@@ -1264,6 +1309,7 @@ public class BLEService2 extends Service {
 
     /**
      * 手环BLE版本
+     *
      * @param context
      */
     public static void readFirmware(Context context) {
@@ -1272,6 +1318,7 @@ public class BLEService2 extends Service {
 
     /**
      * 手环固件版本
+     *
      * @param context
      */
     public static void readSoft(Context context) {

@@ -49,24 +49,28 @@ public class Main2Adapter extends RecyclerView.Adapter<Main2Adapter.MainViewHold
                 } else if (holder.getLayoutPosition() == 3) {
                     BLEService2.readEBC(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 4) {
-                    BLEService2.setEBC(1, 0, 2, 0, 3, 0, 0, 0, 0, 0, 400, holder.itemView.getContext());
+                    BLEService2.setEBC(1000, holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 5) {
-                    BLEService2.hourTotalStep(holder.itemView.getContext());
+                    BLEService2.readBottle(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 6) {
-                    BLEService2.dayTotalStep(holder.itemView.getContext());
+                    BLEService2.setBottle(1, 1, 2, 2, 3, 3, 4, 4, 5, 5, holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 7) {
-                    BLEService2.heartRate(holder.itemView.getContext());
+                    BLEService2.hourTotalStep(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 8) {
-                    BLEService2.sleepTime(holder.itemView.getContext());
+                    BLEService2.dayTotalStep(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 9) {
-                    BLEService2.writeUserInfo(holder.itemView.getContext(), 1, 180, 85, 10000);
+                    BLEService2.heartRate(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 10) {
-                    BLEService2.settingSedentaryReminder(holder.itemView.getContext(), 1);
+                    BLEService2.sleepTime(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 11) {
-                    BLEService2.sedentaryReminder(holder.itemView.getContext());
+                    BLEService2.writeUserInfo(holder.itemView.getContext(), 1, 180, 85, 10000);
                 } else if (holder.getLayoutPosition() == 12) {
-                    BLEService2.allAlarmInfo(holder.itemView.getContext());
+                    BLEService2.settingSedentaryReminder(holder.itemView.getContext(), 1);
                 } else if (holder.getLayoutPosition() == 13) {
+                    BLEService2.sedentaryReminder(holder.itemView.getContext());
+                } else if (holder.getLayoutPosition() == 14) {
+                    BLEService2.allAlarmInfo(holder.itemView.getContext());
+                } else if (holder.getLayoutPosition() == 15) {
                     BLEService2.eventDelete(holder.itemView.getContext(), 10);
 //                    BLEService2.eventAdd(holder.itemView.getContext(), 3, System.currentTimeMillis(), 0x81, "Hello你好你叫什么名字你住哪里你今年多大");
 //                    BLEService2.eventAdd(holder.itemView.getContext(), 4, System.currentTimeMillis(), 0x82, "Hello你好你叫什么名字你住哪里你今年多大");
@@ -75,33 +79,33 @@ public class Main2Adapter extends RecyclerView.Adapter<Main2Adapter.MainViewHold
 //                    BLEService2.eventAdd(holder.itemView.getContext(), 7, System.currentTimeMillis(), 0x81 | 0x82 | 0x84 | 0x88 | 0x90 | 0xA0 | 0xC0, "Hello你好你叫什么名字你住哪里你今年多大");
 //                    BLEService2.eventAdd(holder.itemView.getContext(), 8, System.currentTimeMillis(), 0xA0 | 0xC0, "Hello你好你叫什么名字你住哪里你今年多大");
                     BLEService2.eventAdd(holder.itemView.getContext(), 10, true, System.currentTimeMillis(), 0x81 | 0x84, "Hello你好你叫什么名字你住哪里你今年多大");
-                } else if (holder.getLayoutPosition() == 14) {
-                    BLEService2.alarmClockAdd(holder.itemView.getContext(), 76, true, System.currentTimeMillis(), 0x00, true);
-                } else if (holder.getLayoutPosition() == 15) {
-                    BLEService2.sedentaryByAlarmAdd(holder.itemView.getContext(), 51, true, System.currentTimeMillis(), 0x00);
                 } else if (holder.getLayoutPosition() == 16) {
-                    BLEService2.readAlarm(holder.itemView.getContext(), 9);
+                    BLEService2.alarmClockAdd(holder.itemView.getContext(), 76, true, System.currentTimeMillis(), 0x00, true);
                 } else if (holder.getLayoutPosition() == 17) {
-                    BLEService2.sportsRun(holder.itemView.getContext());
+                    BLEService2.sedentaryByAlarmAdd(holder.itemView.getContext(), 51, true, System.currentTimeMillis(), 0x00);
                 } else if (holder.getLayoutPosition() == 18) {
-                    BLEService2.sportsFastWalk(holder.itemView.getContext());
+                    BLEService2.readAlarm(holder.itemView.getContext(), 9);
                 } else if (holder.getLayoutPosition() == 19) {
-                    BLEService2.sportsSwim(holder.itemView.getContext());
+                    BLEService2.sportsRun(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 20) {
-                    BLEService2.readDeviceInfo(holder.itemView.getContext());
+                    BLEService2.sportsFastWalk(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 21) {
-                    BLEService2.noDisturb(holder.itemView.getContext(), 1, 0, 22, 0, 6);
+                    BLEService2.sportsSwim(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 22) {
-                    BLEService2.sendAppNotify(holder.itemView.getContext(), 0x01, "测试1", "测试2", "12:13");
+                    BLEService2.readDeviceInfo(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 23) {
-                    BLEService2.readName(holder.itemView.getContext());
+                    BLEService2.noDisturb(holder.itemView.getContext(), 1, 0, 22, 0, 6);
                 } else if (holder.getLayoutPosition() == 24) {
-                    BLEService2.readSN(holder.itemView.getContext());
+                    BLEService2.sendAppNotify(holder.itemView.getContext(), 0x01, "测试1", "测试2", "12:13");
                 } else if (holder.getLayoutPosition() == 25) {
-                    BLEService2.readHardware(holder.itemView.getContext());
+                    BLEService2.readName(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 26) {
-                    BLEService2.readFirmware(holder.itemView.getContext());
+                    BLEService2.readSN(holder.itemView.getContext());
                 } else if (holder.getLayoutPosition() == 27) {
+                    BLEService2.readHardware(holder.itemView.getContext());
+                } else if (holder.getLayoutPosition() == 28) {
+                    BLEService2.readFirmware(holder.itemView.getContext());
+                } else if (holder.getLayoutPosition() == 29) {
                     BLEService2.readSoft(holder.itemView.getContext());
                 }
             }
