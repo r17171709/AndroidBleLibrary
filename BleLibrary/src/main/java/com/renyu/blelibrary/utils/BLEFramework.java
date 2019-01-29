@@ -717,10 +717,6 @@ public class BLEFramework {
         }
     }
 
-    public static BluetoothDevice getRemoteDevice() {
-        return BLEFramework.getBleFrameworkInstance().getCurrentBluetoothDevice();
-    }
-
     public static void writeOTABootLoaderCommand(BluetoothGattCharacteristic characteristic, byte[] value, boolean isExitBootloaderCmd) {
         synchronized (BLEFramework.class) {
             writeOTABootLoaderCommand(characteristic, value);
@@ -757,7 +753,6 @@ public class BLEFramework {
             }
         } while ((!status) && (counter-- > 0));
     }
-
 
     private static void writeOTABootLoaderCommandNoResponse(BluetoothGattCharacteristic characteristic, byte[] value) {
         if (BLEFramework.getBleFrameworkInstance().getCurrentGatt() == null) {
