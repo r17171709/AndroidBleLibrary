@@ -68,14 +68,6 @@ public class ConvertUtils {
         return hexStringToByteArray(string, offset, length, length, true);
     }
 
-    public static byte[] hexStringToByteArrayLittleEndian(String string, int offset, int length, int expectedLength) {
-        return hexStringToByteArray(string, offset, length, expectedLength, true);
-    }
-
-    public static byte[] hexStringToByteArrayBigEndian(String string, int offset, int length) {
-        return hexStringToByteArray(string, offset, length, length, false);
-    }
-
     public static byte[] hexStringToByteArrayBigEndian(String string, int offset, int length, int expectedLength) {
         return hexStringToByteArray(string, offset, length, expectedLength, false);
     }

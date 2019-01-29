@@ -61,8 +61,8 @@ public class OTAFUHandler_v1 extends OTAFUHandlerBase {
     private byte mCheckSumType;
     private final int mMaxDataSize;
 
-    public OTAFUHandler_v1(Activity activity, BluetoothGattCharacteristic otaCharacteristic, String filepath, OTAFUHandlerCallback callback) {
-        super(activity, otaCharacteristic, Constants.ACTIVE_APP_NO_CHANGE, Constants.NO_SECURITY_KEY, filepath, callback);//AppId will be taken from the header line of the file
+    public OTAFUHandler_v1(Activity activity, BluetoothGattCharacteristic otaCharacteristic, String filepath) {
+        super(activity, otaCharacteristic, Constants.ACTIVE_APP_NO_CHANGE, Constants.NO_SECURITY_KEY, filepath);
         //Prefer WriteNoResponse over WriteWithResponse
         if ((otaCharacteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) {
             this.mMaxDataSize = BootLoaderCommands_v1.WRITE_NO_RESP_MAX_DATA_SIZE;
@@ -143,7 +143,7 @@ public class OTAFUHandler_v1 extends OTAFUHandlerBase {
             List<OTAFlashRowModel_v1> dataRows = mFileContents.get(CustomFileReader_v1.KEY_DATA);
             //Update progress bar
             int totalLines = dataRows.size();
-            showProgress(mProgressBarPosition, rowNum, totalLines);
+            showProgress(rowNum, totalLines);
             if (rowNum < totalLines) {//Process next row
                 Utils.setIntSharedPreference(getActivity(), Constants.PREF_PROGRAM_ROW_NO, rowNum);
                 Utils.setIntSharedPreference(getActivity(), Constants.PREF_PROGRAM_ROW_START_POS, 0);
@@ -174,7 +174,7 @@ public class OTAFUHandler_v1 extends OTAFUHandlerBase {
             List<OTAFlashRowModel_v1> dataRows = mFileContents.get(CustomFileReader_v1.KEY_DATA);
             //Update progress bar
             int totalLines = dataRows.size();
-            showProgress(mProgressBarPosition, rowNum, totalLines);
+            showProgress(rowNum, totalLines);
             if (rowNum < totalLines) {//Process next row
                 Utils.setIntSharedPreference(getActivity(), Constants.PREF_PROGRAM_ROW_NO, rowNum);
                 Utils.setIntSharedPreference(getActivity(), Constants.PREF_PROGRAM_ROW_START_POS, 0);

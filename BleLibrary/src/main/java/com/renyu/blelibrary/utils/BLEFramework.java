@@ -21,8 +21,6 @@ import android.util.Log;
 
 import com.cypress.cysmart.BLEConnectionServices.BluetoothLeService;
 import com.cypress.cysmart.CommonUtils.Constants;
-import com.cypress.cysmart.CommonUtils.GattAttributes;
-import com.cypress.cysmart.CommonUtils.UUIDDatabase;
 import com.cypress.cysmart.CommonUtils.Utils;
 import com.cypress.cysmart.DataModelClasses.OTAParams;
 import com.renyu.blelibrary.bean.BLEDevice;
@@ -244,7 +242,7 @@ public class BLEFramework {
                 if (isExitBootloaderCmd) {
                     onOtaExitBootloaderComplete(status);
                 }
-                if (characteristic.getUuid().toString().equalsIgnoreCase(GattAttributes.OTA_CHARACTERISTIC)) {
+                if (characteristic.getUuid().toString().equalsIgnoreCase(OTAParams.UUID_SERVICE_OTA.toString())) {
                     writeSemaphore.release();
                 }
             }
@@ -708,7 +706,7 @@ public class BLEFramework {
                 characteristic.getService().getUuid().toString());
         bundle.putInt(Constants.EXTRA_BYTE_SERVICE_INSTANCE_VALUE,
                 characteristic.getService().getInstanceId());
-        if (characteristic.getUuid().equals(UUIDDatabase.UUID_OTA_UPDATE_CHARACTERISTIC)) {
+        if (characteristic.getUuid().equals(OTAParams.UUID_SERVICE_OTA)) {
             boolean isCyacd2File = Utils.getBooleanSharedPreference(context, Constants.PREF_IS_CYACD2_FILE);
             String intentAction = isCyacd2File
                     ? BluetoothLeService.ACTION_OTA_DATA_AVAILABLE_V1

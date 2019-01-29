@@ -45,10 +45,8 @@ import com.cypress.cysmart.CommonUtils.Constants;
 import com.cypress.cysmart.CommonUtils.Logger;
 import com.cypress.cysmart.CommonUtils.Utils;
 import com.cypress.cysmart.OTAFirmwareUpdate.OTAFUHandler;
-import com.cypress.cysmart.OTAFirmwareUpdate.OTAFUHandlerCallback;
 import com.cypress.cysmart.OTAFirmwareUpdate.OTAFUHandler_v0;
 import com.cypress.cysmart.OTAFirmwareUpdate.OTAFUHandler_v1;
-import com.renyu.androidblelibrary.R;
 import com.renyu.blelibrary.utils.BLEFramework;
 
 import java.io.PrintWriter;
@@ -60,11 +58,7 @@ import java.lang.reflect.Proxy;
 /**
  * OTA update fragment
  */
-public class OTAActivity extends AppCompatActivity implements OTAFUHandlerCallback {
-    //Option Mapping
-    public static final int APP_ONLY = 101;
-    public static final int APP_AND_STACK_COMBINED = 201;
-    public static final int APP_AND_STACK_SEPARATE = 301;
+public class OTAActivity extends AppCompatActivity {
     public static final String REGEX_MATCHES_CYACD2 = "(?i).*\\.cyacd2$";
 
     private static OTAFUHandler DUMMY_HANDLER = (OTAFUHandler) Proxy.newProxyInstance(OTAActivity.class.getClassLoader(), new Class<?>[]{OTAFUHandler.class}, new InvocationHandler() {
@@ -112,7 +106,13 @@ public class OTAActivity extends AppCompatActivity implements OTAFUHandlerCallba
         super.onCreate(savedInstanceState);
         String currentFilePath = "/storage/emulated/0/CySmart/Wristhand Demo 1.cyacd2";
         mOTAFUHandler = createOTAFUHandler(BLEFramework.getBleFrameworkInstance().getOTACharacteristic(), (byte) -1, -1, currentFilePath);
-        updateGUI(APP_ONLY);
+        try {
+            if (BLEFramework.getBleFrameworkInstance().getOTACharacteristic() != null) {
+                mOTAFUHandler.prepareFileWrite();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -127,9 +127,6 @@ public class OTAActivity extends AppCompatActivity implements OTAFUHandlerCallba
             mOTAFUHandler.setPrepareFileWriteEnabled(false);//This is expected case. onDestroy might be invoked before the file to upgrade is selected.
         }
         unregisterReceiver(mGattOTAStatusReceiver);
-        if (BLEFramework.getBleFrameworkInstance().getOTACharacteristic() != null) {
-            final String sharedPrefStatus = Utils.getStringSharedPreference(this, Constants.PREF_BOOTLOADER_STATE);
-        }
         super.onDestroy();
     }
 
@@ -137,46 +134,13 @@ public class OTAActivity extends AppCompatActivity implements OTAFUHandlerCallba
     private OTAFUHandler createOTAFUHandler(BluetoothGattCharacteristic otaCharacteristic, byte activeApp, long securityKey, String filepath) {
         boolean isCyacd2File = filepath != null && isCyacd2File(filepath);
         Utils.setBooleanSharedPreference(this, Constants.PREF_IS_CYACD2_FILE, isCyacd2File);
-
         OTAFUHandler handler = DUMMY_HANDLER;
         if (otaCharacteristic != null && filepath != null && filepath != "") {
             handler = isCyacd2File
-                    ? new OTAFUHandler_v1(this, otaCharacteristic, filepath, this)
-                    : new OTAFUHandler_v0(this, otaCharacteristic, activeApp, securityKey, filepath, this);
+                    ? new OTAFUHandler_v1(this, otaCharacteristic, filepath)
+                    : new OTAFUHandler_v0(this, otaCharacteristic, activeApp, securityKey, filepath);
         }
         return handler;
-    }
-
-    private void updateGUI(int updateOption) {
-        switch (updateOption) {
-            case APP_ONLY:
-                mOTAFUHandler.setProgressBarPosition(1);
-                try {
-                    prepareFileWrite();
-                } catch (Exception e) {
-                }
-                break;
-            case APP_AND_STACK_COMBINED:
-                mOTAFUHandler.setProgressBarPosition(1);
-                try {
-                    prepareFileWrite();
-                } catch (Exception e) {
-                }
-                break;
-            case APP_AND_STACK_SEPARATE:
-                mOTAFUHandler.setProgressBarPosition(1);
-                try {
-                    prepareFileWrite();
-                } catch (Exception e) {
-                }
-                break;
-        }
-    }
-
-    private void prepareFileWrite() {
-        if (BLEFramework.getBleFrameworkInstance().getOTACharacteristic() != null) {
-            mOTAFUHandler.prepareFileWrite();
-        }
     }
 
     private boolean isCyacd2File(String file) {

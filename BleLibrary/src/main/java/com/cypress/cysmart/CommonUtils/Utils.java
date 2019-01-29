@@ -59,25 +59,10 @@ public class Utils {
      */
     public static IntentFilter makeGattUpdateIntentFilter() {
         final IntentFilter filter = new IntentFilter();
-        filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         filter.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         filter.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST);
-        filter.addAction(BluetoothLeService.ACTION_PAIRING_CANCEL);
         filter.addAction(BluetoothLeService.ACTION_OTA_STATUS);//CYACD
         filter.addAction(BluetoothLeService.ACTION_OTA_STATUS_V1);//CYACD2
-        filter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
-        filter.addAction(BluetoothLeService.ACTION_GATT_CONNECTING);
-        filter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
-        filter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTING);
-        filter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
-        filter.addAction(BluetoothLeService.ACTION_GATT_SERVICE_DISCOVERY_UNSUCCESSFUL);
-        filter.addAction(BluetoothLeService.ACTION_GATT_CHARACTERISTIC_ERROR);
-        filter.addAction(BluetoothLeService.ACTION_GATT_INSUFFICIENT_ENCRYPTION);
-        filter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
-        filter.addAction(BluetoothLeService.ACTION_WRITE_SUCCESS);
-        filter.addAction(BluetoothLeService.ACTION_WRITE_FAILED);
-        filter.addAction(BluetoothLeService.ACTION_WRITE_COMPLETED);
-        filter.addAction(LocationManager.PROVIDERS_CHANGED_ACTION);
         return filter;
     }
 

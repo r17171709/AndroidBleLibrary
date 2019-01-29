@@ -61,8 +61,8 @@ public class OTAFUHandler_v0 extends OTAFUHandlerBase implements FileReadStatusU
     private int mEndRow;
     private final int mMaxDataSize;
 
-    public OTAFUHandler_v0(Activity activity, BluetoothGattCharacteristic otaCharacteristic, byte activeApp, long securityKey, String filepath, OTAFUHandlerCallback callback) {
-        super(activity, otaCharacteristic, activeApp, securityKey, filepath, callback);
+    public OTAFUHandler_v0(Activity activity, BluetoothGattCharacteristic otaCharacteristic, byte activeApp, long securityKey, String filepath) {
+        super(activity, otaCharacteristic, activeApp, securityKey, filepath);
         //Prefer WriteNoResponse over WriteWithResponse
         if ((otaCharacteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) {
             this.mMaxDataSize = BootLoaderCommands_v0.WRITE_NO_RESP_MAX_DATA_SIZE;
@@ -260,7 +260,7 @@ public class OTAFUHandler_v0 extends OTAFUHandlerBase implements FileReadStatusU
                     if (fileChecksumByte.equalsIgnoreCase(checksumReceived)) {
                         programRowNum++;
                         //Shows ProgressBar status
-                        showProgress(mProgressBarPosition, programRowNum, mFlashRowList.size());
+                        showProgress(programRowNum, mFlashRowList.size());
                         if (programRowNum < mFlashRowList.size()) {
                             Utils.setIntSharedPreference(getActivity(), Constants.PREF_PROGRAM_ROW_NO, programRowNum);
                             Utils.setIntSharedPreference(getActivity(), Constants.PREF_PROGRAM_ROW_START_POS, 0);
