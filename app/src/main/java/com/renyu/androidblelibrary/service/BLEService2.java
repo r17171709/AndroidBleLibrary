@@ -565,7 +565,7 @@ public class BLEService2 extends Service {
                 bleFramework.stopScan(true);
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.OTA)) {
-                bleFramework.startOTA();
+
             }
         }
         return super.onStartCommand(intent, flags, startId);

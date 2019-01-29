@@ -35,13 +35,32 @@
 package com.cypress.cysmart.OTAFirmwareUpdate;
 
 /**
- * Interface created for sending the file read status
+ * Class created for bootloader commands constants
  */
-interface FileReadStatusUpdater {
+class BootLoaderCommands_v0 {
 
-    /**
-     * Provide the file reading status to the FileListing Fragment
-     */
-    public void onFileReadProgressUpdate(int fileLine);
+    /* Command identifier for verifying the checksum value of the bootloadable project. */
+    public static final int VERIFY_CHECK_SUM = 0x31;
+    /* Command identifier for getting the number of flash rows in the target device. */
+    public static final int GET_FLASH_SIZE = 0x32;
+    /* Command identifier for getting info about the app status. This is only supported on multi app bootloader. */
+    public static final int GET_APP_STATUS = 0x33;
+    /* Command identifier for setting the active application. This is only supported on multi app bootloader. */
+    public static final int SET_ACTIVE_APP = 0x36;
+    /* Command identifier for sending a block of data to the bootloader without doing anything with it yet. */
+    public static final int SEND_DATA = 0x37;
+    /* Command identifier for starting the boot loader.  All other commands ignored until this is sent. */
+    public static final int ENTER_BOOTLOADER = 0x38;
+    /* Command identifier for programming a single row of flash. */
+    public static final int PROGRAM_ROW = 0x39;
+    /* Command to verify data */
+    public static final int VERIFY_ROW = 0x3A;
+    /* Command identifier for exiting the bootloader and restarting the target program. */
+    public static final int EXIT_BOOTLOADER = 0x3B;
 
+    public static final int PACKET_START = 0x01;
+    public static final int PACKET_END = 0x17;
+    public static final int BASE_CMD_SIZE = 0x07;//SOP(1) + CmdCode(1) + DataLength(2) + Checksum(2) + EOP(1)
+    public static final int WRITE_WITH_RESP_MAX_DATA_SIZE = 133;
+    public static final int WRITE_NO_RESP_MAX_DATA_SIZE = 300;
 }

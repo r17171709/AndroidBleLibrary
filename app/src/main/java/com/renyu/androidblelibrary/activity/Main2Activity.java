@@ -94,7 +94,7 @@ public class Main2Activity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 for (BLEDevice device : devices) {
-                    if (device.getDevice()!=null && device.getDevice().getName() != null && device.getDevice().getName().equals("ebaina")) {
+                    if (device.getDevice()!=null && device.getDevice().getName() != null && device.getDevice().getName().equals("ebaina-DFU")) {
                         BLEService2.conn(Main2Activity.this, device.getDevice());
                         break;
                     }
@@ -145,6 +145,9 @@ public class Main2Activity extends AppCompatActivity {
         }
         if (model.getBleState()==BLEFramework.STATE_DISCONNECTED) {
             Toast.makeText(this, "连接断开", Toast.LENGTH_SHORT).show();
+        }
+        if (model.getBleState()==BLEFramework.STATE_SERVICES_OTA_DISCOVERED) {
+            startActivity(new Intent(this, OTAActivity.class));
         }
     }
 

@@ -1,3 +1,50 @@
 <resources>
     <string name="app_name">BleLibrary</string>
+
+    <!-- OTA profile elements -->
+    <string name="ota_list">Select Upgrade Option</string>
+    <string name="ota_file_list">Select Firmware Upgrade files</string>
+    <string name="ota_list_app_download">Application Upgrade</string>
+    <string name="ota_list_app_stack_down_comb">Application and Stack Upgrade (Combined Files)</string>
+    <string name="ota_list_app_stack_down_sep">Application and Stack Upgrade (Separate Files)</string>
+    <string name="ota_upgrade">UPGRADE</string>
+    <string name="ota_next">NEXT</string>
+    <string name="ota_stop">STOP</string>
+    <string name="ota_file_read">Reading file, Please wait..</string>
+    <string name="ota_file_read_complete">File Read Completed</string>
+    <string name="ota_file_writ">Writing file, Please wait..</string>
+    <string name="ota_enter_bootloader">Executing Enter Bootloader Command…</string>
+    <string name="ota_get_app_status">Executing Get Application Status Command…</string>
+    <string name="ota_get_flash_size">Executing Get Flash Size Command…</string>
+    <string name="ota_program_row">Firmware Upgrade in progress…</string>
+    <string name="ota_verify_row">Firmware Upgrade in progress…</string>
+    <string name="ota_verify_checksum">Executing Verify Checksum Command…</string>
+    <string name="ota_set_active_application">Executing Set Active Application Command…</string>
+    <string name="ota_set_eiv">Executing Set EIV Command…</string>
+    <string name="ota_end_bootloader">Executing Exit Bootloader Command…</string>
+    <string name="ota_end_success">Firmware upgrade completed successfully.</string>
+    <string name="ota_set_application_metadata">Executing Set Application Metadata Command…</string>
+    <string name="ota_verify_application">Executing Verify Application Command…</string>
+    <string name="toast_ota_dev_address">Different devices....!!</string>
+    <string name="toast_ota_no_update">No update found</string>
+    <string name="toast_ota_pending">You have a Second file to Upgrade.</string>
+    <string name="toast_ota_completed">OTA successfully Completed</string>
+    <string name="toast_ota_one_completion">Stack successfully Updated. Please select the same profile to Upgrade the Application</string>
+    <string name="ota_title">OTA Firmware Upgrade</string>
+    <string name="ota_stack_file">Select the Stack Upgrade file</string>
+    <string name="ota_app_file">Select the Application Upgrade file</string>
+    <string name="ota_toast_stack_file_selected">Stack file selected</string>
+    <string name="ota_toast_pair">Please PAIR the device before starting the Upgrade</string>
+    <string name="ota_notification_title">CySmart</string>
+    <string name="ota_notification_ongoing">OTA Upgrade in progress</string>
+    <string name="ota_notification_stack_file">Stack upgrade completed successfully. Application upgrade pending.</string>
+    <string name="ota_notification_both_file">OTA Firmware Upgrade</string>
+    <string name="ota_alert_invalid_file">Invalid or corrupted file</string>
+    <string name="ota_alert_file_application">Select a file for application upgrade!</string>
+    <string name="ota_alert_file_applicationstackcomb">Select a file for both stack and application upgrade with combined file!</string>
+    <string name="ota_alert_file_applicationstacksep_app_sel">Select the application upgrade file to proceed!</string>
+    <string name="ota_alert_file_applicationstacksep_stack_sel">Select the stack upgrade file to proceed!</string>
+    <string name="ota_active_application">Active application:</string>
+    <string name="ota_security_key_required">Security key: 0x</string>
+    <string name="ota_security_key_invalid">6-byte hexadecimal number expected</string>
 </resources>

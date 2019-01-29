@@ -35,13 +35,32 @@
 package com.cypress.cysmart.OTAFirmwareUpdate;
 
 /**
- * Interface created for sending the file read status
+ * Class created for bootloader command constants
  */
-interface FileReadStatusUpdater {
+class BootLoaderCommands_v1 {
 
-    /**
-     * Provide the file reading status to the FileListing Fragment
-     */
-    public void onFileReadProgressUpdate(int fileLine);
+    /* Command identifier for verifying the checksum value of the bootloadable project. */
+    public static final int VERIFY_APP = 0x31;
+    /* Command identifier for sending a block of data to the bootloader without doing anything with it yet. */
+    public static final int SEND_DATA = 0x37;
+    /* Command identifier for starting the boot loader.  All other commands ignored until this is sent. */
+    public static final int ENTER_BOOTLOADER = 0x38;
+    /* Command identifier for exiting the bootloader and restarting the target program. */
+    public static final int EXIT_BOOTLOADER = 0x3B;
+    /* Command identifier for sending a block of data to the bootloader without doing anything with it yet. */
+    public static final int SEND_DATA_WITHOUT_RESPONSE = 0x47;
+    /* Command to program data. */
+    public static final int PROGRAM_DATA = 0x49;
+    /* Command to verify data */
+    public static final int VERIFY_DATA = 0x4A;
+    /* Command to set application metadata in bootloader SDK */
+    public static final int SET_APP_METADATA = 0x4C;
+    /* Command to set encryption initial vector */
+    public static final int SET_EIV = 0x4D;
 
+    public static final int PACKET_START = 0x01;
+    public static final int PACKET_END = 0x17;
+    public static final int BASE_CMD_SIZE = 7;//SOP(1) + CmdCode(1) + DataLength(2) + Checksum(2) + EOP(1)
+    public static final int WRITE_WITH_RESP_MAX_DATA_SIZE = 133;
+    public static final int WRITE_NO_RESP_MAX_DATA_SIZE = 300;
 }

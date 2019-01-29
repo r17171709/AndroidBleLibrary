@@ -19,9 +19,12 @@ import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.cypress.cysmart.BLEConnectionServices.BluetoothLeService;
 import com.cypress.cysmart.CommonUtils.Constants;
+import com.cypress.cysmart.CommonUtils.GattAttributes;
+import com.cypress.cysmart.CommonUtils.UUIDDatabase;
+import com.cypress.cysmart.CommonUtils.Utils;
 import com.cypress.cysmart.DataModelClasses.OTAParams;
-import com.cypress.cysmart.OTAFirmwareUpdate.OTAService;
 import com.renyu.blelibrary.bean.BLEDevice;
 import com.renyu.blelibrary.impl.BLEOTAListener;
 import com.renyu.blelibrary.impl.BLERSSIListener;
@@ -37,6 +40,7 @@ import com.renyu.blelibrary.impl.IScanAndConnRule;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 
 /**
  * Created by renyu on 2017/1/12.
@@ -61,12 +65,12 @@ public class BLEFramework {
     // 设备正在执行OTA
     public static final int STATE_SERVICES_OTA_DISCOVERED = 6;
     // 当前设备状态
-    private int connectionState=STATE_DISCONNECTED;
+    private int connectionState = STATE_DISCONNECTED;
 
     // 搜索到的设备
     private HashMap<String, BLEDevice> tempsDevices;
     // 搜索所需时间
-    private int timeSeconds=3000;
+    private int timeSeconds = 3000;
     // 搜索Handler
     private Handler handlerScan;
 
@@ -99,17 +103,18 @@ public class BLEFramework {
     private BLEWriteErrorListener bleWriteErrorListener;
 
     // OTA标记
-    public static boolean isOTA=false;
+    public static boolean isOTA = true;
     // OTA服务所需Characteristic
     private BluetoothGattCharacteristic mOTACharacteristic;
-    private boolean m_otaExitBootloaderCmdInProgress = false;
+    private static boolean mOtaExitBootloaderCmdInProgress = false;
+    private static Semaphore writeSemaphore = new Semaphore(1);
 
     public static BLEFramework getBleFrameworkInstance() {
-        if (bleFramework==null) {
+        if (bleFramework == null) {
             synchronized (BLEFramework.class) {
-                if (bleFramework==null) {
+                if (bleFramework == null) {
                     // 初始化BLE基本参数
-                    bleFramework=new BLEFramework();
+                    bleFramework = new BLEFramework();
                 }
             }
         }
@@ -122,10 +127,11 @@ public class BLEFramework {
 
     /**
      * 设置Context
+     *
      * @param context
      */
     public void setParams(Context context) {
-        this.context=context;
+        this.context = context;
     }
 
     public void initBLE() {
@@ -134,18 +140,18 @@ public class BLEFramework {
         }
 
         // 初始化队列
-        requestQueue=RequestQueue.getQueueInstance(bleFramework, bleWriteErrorListener);
+        requestQueue = RequestQueue.getQueueInstance(bleFramework, bleWriteErrorListener);
 
         // 临时存储BLE全部设备
-        tempsDevices=new HashMap<>();
+        tempsDevices = new HashMap<>();
 
         // 初始化BLE基本参数
         BluetoothManager manager = (BluetoothManager) context.getSystemService(Context.BLUETOOTH_SERVICE);
-        adapter= manager.getAdapter();
-        handlerScan=new Handler(Looper.getMainLooper());
+        adapter = manager.getAdapter();
+        handlerScan = new Handler(Looper.getMainLooper());
 
         // GATT回调
-        bleGattCallback=new BluetoothGattCallback() {
+        bleGattCallback = new BluetoothGattCallback() {
             @Override
             public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
                 super.onMtuChanged(gatt, mtu, status);
@@ -174,10 +180,10 @@ public class BLEFramework {
             @Override
             public void onServicesDiscovered(BluetoothGatt gatt, int status) {
                 super.onServicesDiscovered(gatt, status);
-                BLEFramework.this.gatt=gatt;
-                if (status==BluetoothGatt.GATT_SUCCESS) {
+                BLEFramework.this.gatt = gatt;
+                if (status == BluetoothGatt.GATT_SUCCESS) {
                     if (checkIsOTA()) {
-                        if (gatt.getService(OTAParams.UUID_SERVICE_OTASERVICE)!=null) {
+                        if (gatt.getService(OTAParams.UUID_SERVICE_OTASERVICE) != null) {
                             BluetoothGattCharacteristic characteristic = gatt.getService(OTAParams.UUID_SERVICE_OTASERVICE).getCharacteristic(OTAParams.UUID_SERVICE_OTA);
                             if (enableNotification(characteristic, gatt, OTAParams.UUID_DESCRIPTOR_OTA)) {
                                 mOTACharacteristic = characteristic;
@@ -185,14 +191,13 @@ public class BLEFramework {
                                 return;
                             }
                         }
-                    }
-                    else {
+                    } else {
                         for (BluetoothGattService bluetoothGattService : gatt.getServices()) {
-                            System.out.println("bluetoothGattService:  "+bluetoothGattService.getUuid().toString());
+                            System.out.println("bluetoothGattService:  " + bluetoothGattService.getUuid().toString());
                             for (BluetoothGattCharacteristic bluetoothGattCharacteristic : bluetoothGattService.getCharacteristics()) {
-                                System.out.println("bluetoothGattCharacteristic:  "+bluetoothGattCharacteristic.getUuid().toString());
+                                System.out.println("bluetoothGattCharacteristic:  " + bluetoothGattCharacteristic.getUuid().toString());
                                 for (BluetoothGattDescriptor bluetoothGattDescriptor : bluetoothGattCharacteristic.getDescriptors()) {
-                                    System.out.println("bluetoothGattDescriptor:  "+bluetoothGattDescriptor.getUuid().toString());
+                                    System.out.println("bluetoothGattDescriptor:  " + bluetoothGattDescriptor.getUuid().toString());
                                     enableNotification(bluetoothGattCharacteristic, gatt, bluetoothGattDescriptor.getUuid());
                                 }
                             }
@@ -209,11 +214,11 @@ public class BLEFramework {
             @Override
             public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 super.onCharacteristicRead(gatt, characteristic, status);
-                if (status==BluetoothGatt.GATT_SUCCESS) {
+                if (status == BluetoothGatt.GATT_SUCCESS) {
                     requestQueue.release();
                 }
 
-                if (bleReadResponseListener!=null) {
+                if (bleReadResponseListener != null) {
                     bleReadResponseListener.getResponseValues(characteristic.getUuid(), characteristic.getValue());
                 }
             }
@@ -222,7 +227,7 @@ public class BLEFramework {
             public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
                 super.onCharacteristicWrite(gatt, characteristic, status);
 
-                if (status==BluetoothGatt.GATT_SUCCESS) {
+                if (status == BluetoothGatt.GATT_SUCCESS) {
                     requestQueue.release();
                     if (!checkIsOTA()) {
                         return;
@@ -231,15 +236,16 @@ public class BLEFramework {
 
                 boolean isExitBootloaderCmd;
                 synchronized (BLEFramework.class) {
-                    isExitBootloaderCmd = m_otaExitBootloaderCmdInProgress;
-                    if(m_otaExitBootloaderCmdInProgress)
-                        m_otaExitBootloaderCmdInProgress = false;
+                    isExitBootloaderCmd = mOtaExitBootloaderCmdInProgress;
+                    if (mOtaExitBootloaderCmdInProgress) {
+                        mOtaExitBootloaderCmdInProgress = false;
+                    }
                 }
-                if(isExitBootloaderCmd) {
-                    Intent intent=new Intent(context, OTAService.class);
-                    intent.putExtra("command", 2);
-                    intent.putExtra("status", status);
-                    context.startService(intent);
+                if (isExitBootloaderCmd) {
+                    onOtaExitBootloaderComplete(status);
+                }
+                if (characteristic.getUuid().toString().equalsIgnoreCase(GattAttributes.OTA_CHARACTERISTIC)) {
+                    writeSemaphore.release();
                 }
             }
 
@@ -249,15 +255,9 @@ public class BLEFramework {
 
                 //ota的指令
                 if (OTAParams.UUID_SERVICE_OTA.toString().equals(characteristic.getUuid().toString())) {
-                    Intent intentOTA = new Intent(OTAParams.ACTION_OTA_DATA_AVAILABLE);
-                    Bundle mBundle = new Bundle();
-                    mBundle.putByteArray(Constants.EXTRA_BYTE_VALUE, characteristic.getValue());
-                    mBundle.putString(Constants.EXTRA_BYTE_UUID_VALUE, characteristic.getUuid().toString());
-                    intentOTA.putExtras(mBundle);
-                    context.sendBroadcast(intentOTA);
-                }
-                else {
-                    if (bleWriteResponseListener!=null) {
+                    broadcastNotifyUpdate(characteristic);
+                } else {
+                    if (bleWriteResponseListener != null) {
                         bleWriteResponseListener.getResponseValues(characteristic.getValue());
                     }
                 }
@@ -266,7 +266,7 @@ public class BLEFramework {
             @Override
             public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
                 super.onReadRemoteRssi(gatt, rssi, status);
-                if (blerssiListener!=null) {
+                if (blerssiListener != null) {
                     blerssiListener.getRssi(rssi);
                 }
             }
@@ -275,12 +275,12 @@ public class BLEFramework {
 
     private boolean enableNotification(BluetoothGattCharacteristic characteristic, BluetoothGatt gatt, UUID uuid) {
         boolean success = gatt.setCharacteristicNotification(characteristic, true);
-        if(!success) {
+        if (!success) {
             return false;
         }
-        if (characteristic.getDescriptors().size()>0) {
+        if (characteristic.getDescriptors().size() > 0) {
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(uuid);
-            if(descriptor != null) {
+            if (descriptor != null) {
                 descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                 gatt.writeDescriptor(descriptor);
                 return true;
@@ -293,23 +293,24 @@ public class BLEFramework {
      * 断开BLE连接
      */
     public synchronized void disconnect() {
-        if (gatt!=null)
+        if (gatt != null)
             gatt.disconnect();
     }
 
     /**
      * 开始扫描
+     *
      * @return
      */
     public synchronized void startScan() {
         // BLE扫描回调
         if (Build.VERSION_CODES.LOLLIPOP <= Build.VERSION.SDK_INT) {
-            bleScan21CallBack=new BLEScan21CallBack() {
+            bleScan21CallBack = new BLEScan21CallBack() {
                 @Override
                 public void onScanResult(int callbackType, ScanResult result) {
                     super.onScanResult(callbackType, result);
-                    if (result !=null && result.getDevice()!=null && !tempsDevices.containsKey(result.getDevice().getAddress())) {
-                        BLEDevice device1=new BLEDevice();
+                    if (result != null && result.getDevice() != null && !tempsDevices.containsKey(result.getDevice().getAddress())) {
+                        BLEDevice device1 = new BLEDevice();
                         device1.setRssi(result.getRssi());
                         device1.setDevice(result.getDevice());
                         device1.setScanRecord(result.getScanRecord().getBytes());
@@ -327,13 +328,12 @@ public class BLEFramework {
                     stopScan(false);
                 }
             }, timeSeconds);
-        }
-        else {
-            leScanCallback=new BLEScanCallBack() {
+        } else {
+            leScanCallback = new BLEScanCallBack() {
                 @Override
                 public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-                    if (device!=null && !tempsDevices.containsKey(device.getAddress())) {
-                        BLEDevice device1=new BLEDevice();
+                    if (device != null && !tempsDevices.containsKey(device.getAddress())) {
+                        BLEDevice device1 = new BLEDevice();
                         device1.setRssi(rssi);
                         device1.setDevice(device);
                         device1.setScanRecord(scanRecord);
@@ -342,7 +342,7 @@ public class BLEFramework {
                     }
                 }
             };
-            boolean success=adapter.startLeScan(leScanCallback);
+            boolean success = adapter.startLeScan(leScanCallback);
             if (success) {
                 // 开始搜索
                 setConnectionState(STATE_SCANNING);
@@ -352,8 +352,7 @@ public class BLEFramework {
                         stopScan(false);
                     }
                 }, timeSeconds);
-            }
-            else {
+            } else {
                 setConnectionState(STATE_DISCONNECTED);
             }
         }
@@ -361,19 +360,20 @@ public class BLEFramework {
 
     /**
      * 扫描完成直接连接
+     *
      * @param iScanAndConnRule
      */
     public synchronized void startScanAndConn(final IScanAndConnRule iScanAndConnRule) {
         // BLE扫描回调
         if (Build.VERSION_CODES.LOLLIPOP <= Build.VERSION.SDK_INT) {
-            bleScan21CallBack=new BLEScan21CallBack() {
+            bleScan21CallBack = new BLEScan21CallBack() {
                 @Override
                 public void onScanResult(int callbackType, ScanResult result) {
                     super.onScanResult(callbackType, result);
-                    if (result !=null && result.getDevice()!=null && iScanAndConnRule.rule21(result)) {
+                    if (result != null && result.getDevice() != null && iScanAndConnRule.rule21(result)) {
                         // 已经发生了连接
                         if (connectionState <= STATE_SCANNED) {
-                            BLEDevice device1=new BLEDevice();
+                            BLEDevice device1 = new BLEDevice();
                             device1.setRssi(result.getRssi());
                             device1.setDevice(result.getDevice());
                             device1.setScanRecord(result.getScanRecord().getBytes());
@@ -393,15 +393,14 @@ public class BLEFramework {
                     stopScan(true);
                 }
             }, timeSeconds);
-        }
-        else {
-            leScanCallback=new BLEScanCallBack() {
+        } else {
+            leScanCallback = new BLEScanCallBack() {
                 @Override
                 public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-                    if (device!=null && !TextUtils.isEmpty(device.getName()) && iScanAndConnRule.rule(device)) {
+                    if (device != null && !TextUtils.isEmpty(device.getName()) && iScanAndConnRule.rule(device)) {
                         // 已经发生了连接
                         if (connectionState <= STATE_SCANNED) {
-                            BLEDevice device1=new BLEDevice();
+                            BLEDevice device1 = new BLEDevice();
                             device1.setRssi(rssi);
                             device1.setDevice(device);
                             device1.setScanRecord(scanRecord);
@@ -412,7 +411,7 @@ public class BLEFramework {
                     }
                 }
             };
-            boolean success=adapter.startLeScan(leScanCallback);
+            boolean success = adapter.startLeScan(leScanCallback);
             if (success) {
                 // 开始搜索
                 setConnectionState(STATE_SCANNING);
@@ -422,8 +421,7 @@ public class BLEFramework {
                         stopScan(true);
                     }
                 }, timeSeconds);
-            }
-            else {
+            } else {
                 setConnectionState(STATE_DISCONNECTED);
             }
         }
@@ -435,20 +433,18 @@ public class BLEFramework {
     public synchronized void stopScan(boolean scanConnFail) {
         handlerScan.removeCallbacksAndMessages(null);
         if (Build.VERSION_CODES.LOLLIPOP <= Build.VERSION.SDK_INT) {
-            if (bleScan21CallBack!=null && adapter.isEnabled() && adapter.getBluetoothLeScanner()!=null) {
+            if (bleScan21CallBack != null && adapter.isEnabled() && adapter.getBluetoothLeScanner() != null) {
                 adapter.getBluetoothLeScanner().stopScan(bleScan21CallBack);
             }
-        }
-        else {
-            if (leScanCallback!=null && adapter!=null) {
+        } else {
+            if (leScanCallback != null && adapter != null) {
                 adapter.stopLeScan(leScanCallback);
             }
         }
         if (scanConnFail) {
             // 扫描连接失败
             setConnectionState(STATE_DISCONNECTED);
-        }
-        else {
+        } else {
             // 搜索完毕
             setConnectionState(STATE_SCANNED);
         }
@@ -457,6 +453,7 @@ public class BLEFramework {
 
     /**
      * 开始连接
+     *
      * @param device
      */
     public synchronized void startConn(BluetoothDevice device) {
@@ -468,17 +465,19 @@ public class BLEFramework {
 
     /**
      * 设置当前状态
+     *
      * @param state
      */
     private void setConnectionState(int state) {
-        connectionState=state;
-        if (bleStateChangeListener!=null) {
+        connectionState = state;
+        if (bleStateChangeListener != null) {
             bleStateChangeListener.getCurrentState(state);
         }
     }
 
     /**
      * 获取设备当前状态
+     *
      * @return
      */
     public int getConnectionState() {
@@ -487,22 +486,22 @@ public class BLEFramework {
 
     /**
      * 发送数据
+     *
      * @param serviceUUID
      * @param characUUID
      * @param value
      */
     void writeCharacteristic(UUID serviceUUID, UUID characUUID, byte[] value) {
-        if (gatt!=null) {
+        if (gatt != null) {
             BluetoothGattCharacteristic characteristic = gatt.getService(serviceUUID).getCharacteristic(characUUID);
-            if (characteristic==null) {
+            if (characteristic == null) {
                 Log.d("BLEFramework", "writeCharacteristic中uuid不存在");
                 return;
             }
             characteristic.setValue(value);
             if (!gatt.writeCharacteristic(characteristic)) {
                 Log.d("BLEFramework", "writeCharacteristic失败");
-            }
-            else {
+            } else {
                 Log.d("BLEFramework", "writeCharacteristic成功");
             }
         }
@@ -510,20 +509,20 @@ public class BLEFramework {
 
     /**
      * 主动读数据
+     *
      * @param serviceUUID
      * @param CharacUUID
      */
     void readCharacteristic(UUID serviceUUID, UUID CharacUUID) {
-        if (gatt!=null) {
+        if (gatt != null) {
             BluetoothGattCharacteristic characteristic = gatt.getService(serviceUUID).getCharacteristic(CharacUUID);
-            if (characteristic==null) {
+            if (characteristic == null) {
                 Log.d("BLEFramework", "readCharacteristic中uuid不存在");
                 return;
             }
             if (!gatt.readCharacteristic(characteristic)) {
                 Log.d("BLEFramework", "readCharacteristic失败");
-            }
-            else {
+            } else {
                 Log.d("BLEFramework", "readCharacteristic成功");
             }
         }
@@ -531,6 +530,7 @@ public class BLEFramework {
 
     /**
      * 发送写命令队列
+     *
      * @param sendValue
      */
     public void addWriteCommand(UUID serviceUUID, UUID characUUID, byte[] sendValue) {
@@ -539,6 +539,7 @@ public class BLEFramework {
 
     /**
      * 发送读命令队列
+     *
      * @param serviceUUID
      * @param CharacUUID
      */
@@ -557,38 +558,27 @@ public class BLEFramework {
 
     /**
      * 获取当前连接的gatt对象
+     *
      * @return
      */
     public BluetoothGatt getCurrentGatt() {
-        if (gatt==null) throw new RuntimeException("BLE服务没有启动");
+        if (gatt == null) throw new RuntimeException("BLE服务没有启动");
         return gatt;
     }
 
     /**
-     * 获取当前OTA连接的Characteristic
-     * @return
-     */
-    public BluetoothGattCharacteristic getOTACharacteristic() {
-        return mOTACharacteristic;
-    }
-
-    /**
      * 获取当前连接的设备
+     *
      * @return
      */
     public BluetoothDevice getCurrentBluetoothDevice() {
-        if (currentDevice==null) throw new RuntimeException("BLE服务没有启动");
+        if (currentDevice == null) throw new RuntimeException("BLE服务没有启动");
         return currentDevice;
-    }
-
-    public void updateOTAProgress(int progress) {
-        if (bleotaListener!=null) {
-            bleotaListener.showProgress(progress);
-        }
     }
 
     /**
      * 设置BLE连接回调
+     *
      * @param bleScanCallBackListener
      */
     public void setBleScanCallbackListener(BLEScanCallBackListener bleScanCallBackListener) {
@@ -597,6 +587,7 @@ public class BLEFramework {
 
     /**
      * 设置BLE状态回调
+     *
      * @param bleStateChangeListener
      */
     public void setBleStateChangeListener(BLEStateChangeListener bleStateChangeListener) {
@@ -605,6 +596,7 @@ public class BLEFramework {
 
     /**
      * 设置BLE返回值回调
+     *
      * @param bleWriteResponseListener
      */
     public void setBLEWriteResponseListener(BLEWriteResponseListener bleWriteResponseListener) {
@@ -613,6 +605,7 @@ public class BLEFramework {
 
     /**
      * 设置OTA进度回调
+     *
      * @param bleotaListener
      */
     public void setBleotaListener(BLEOTAListener bleotaListener) {
@@ -621,6 +614,7 @@ public class BLEFramework {
 
     /**
      * 设置BLE读命令回调
+     *
      * @param bleReadResponseListener
      */
     public void setBleReadResponseListener(BLEReadResponseListener bleReadResponseListener) {
@@ -633,6 +627,7 @@ public class BLEFramework {
 
     /**
      * BLE指令无返回回调
+     *
      * @param bleWriteErrorListener
      */
     public void setBleWriteErrorListener(BLEWriteErrorListener bleWriteErrorListener) {
@@ -641,10 +636,11 @@ public class BLEFramework {
 
     /**
      * 设置扫描时间
+     *
      * @param timeSeconds
      */
     public void setTimeSeconds(int timeSeconds) {
-        this.timeSeconds=timeSeconds;
+        this.timeSeconds = timeSeconds;
     }
 
     public synchronized boolean refreshDeviceCache() {
@@ -663,8 +659,8 @@ public class BLEFramework {
         if (gatt != null) {
             gatt.close();
         }
-        gatt=null;
-        currentDevice=null;
+        gatt = null;
+        currentDevice = null;
 
         setConnectionState(STATE_DISCONNECTED);
     }
@@ -684,16 +680,139 @@ public class BLEFramework {
     }
 
     /**
-     * 开启OTA模式
+     * 获取当前OTA连接的Characteristic
+     * @return
      */
-    public void startOTA() {
-        Intent intent=new Intent(context, OTAService.class);
-        intent.putExtra("command", 1);
-        context.startService(intent);
+    public BluetoothGattCharacteristic getOTACharacteristic() {
+        return mOTACharacteristic;
     }
 
-    /**************  提供给OTA服务使用的对象  ****************/
-    public void setM_otaExitBootloaderCmdInProgress(boolean m_otaExitBootloaderCmdInProgress) {
-        this.m_otaExitBootloaderCmdInProgress=m_otaExitBootloaderCmdInProgress;
+    private void onOtaExitBootloaderComplete(int status) {
+        Bundle bundle = new Bundle();
+        bundle.putByteArray(Constants.EXTRA_BYTE_VALUE, new byte[]{(byte) status});
+        Intent intentOTA = new Intent(BluetoothLeService.ACTION_OTA_DATA_AVAILABLE);
+        intentOTA.putExtras(bundle);
+        context.sendBroadcast(intentOTA);
+    }
+
+    private void broadcastNotifyUpdate(final BluetoothGattCharacteristic characteristic) {
+        Bundle bundle = new Bundle();
+        // Putting the byte value read for GATT Db
+        bundle.putByteArray(Constants.EXTRA_BYTE_VALUE,
+                characteristic.getValue());
+        bundle.putString(Constants.EXTRA_BYTE_UUID_VALUE,
+                characteristic.getUuid().toString());
+        bundle.putInt(Constants.EXTRA_BYTE_INSTANCE_VALUE,
+                characteristic.getInstanceId());
+        bundle.putString(Constants.EXTRA_BYTE_SERVICE_UUID_VALUE,
+                characteristic.getService().getUuid().toString());
+        bundle.putInt(Constants.EXTRA_BYTE_SERVICE_INSTANCE_VALUE,
+                characteristic.getService().getInstanceId());
+        if (characteristic.getUuid().equals(UUIDDatabase.UUID_OTA_UPDATE_CHARACTERISTIC)) {
+            boolean isCyacd2File = Utils.getBooleanSharedPreference(context, Constants.PREF_IS_CYACD2_FILE);
+            String intentAction = isCyacd2File
+                    ? BluetoothLeService.ACTION_OTA_DATA_AVAILABLE_V1
+                    : BluetoothLeService.ACTION_OTA_DATA_AVAILABLE;
+            Intent intentOTA = new Intent(intentAction);
+            intentOTA.putExtras(bundle);
+            context.sendBroadcast(intentOTA);
+        }
+    }
+
+    public static BluetoothDevice getRemoteDevice() {
+        return BLEFramework.getBleFrameworkInstance().getCurrentBluetoothDevice();
+    }
+
+    public static void writeOTABootLoaderCommand(BluetoothGattCharacteristic characteristic, byte[] value, boolean isExitBootloaderCmd) {
+        synchronized (BLEFramework.class) {
+            writeOTABootLoaderCommand(characteristic, value);
+            if (isExitBootloaderCmd) {
+                mOtaExitBootloaderCmdInProgress = true;
+            }
+        }
+    }
+
+    public static void writeOTABootLoaderCommand(BluetoothGattCharacteristic characteristic, byte[] value) {
+        if ((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) {
+            writeOTABootLoaderCommandNoResponse(characteristic, value);
+        } else {
+            writeOTABootLoaderCommandWithResponse(characteristic, value);
+        }
+    }
+
+    private static void writeOTABootLoaderCommandWithResponse(BluetoothGattCharacteristic characteristic, byte[] value) {
+        if (BLEFramework.getBleFrameworkInstance().getCurrentGatt() == null) {
+            return;
+        }
+        characteristic.setValue(value);
+        int counter = 20;
+        boolean status;
+        do {
+            characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+            status = BLEFramework.getBleFrameworkInstance().getCurrentGatt().writeCharacteristic(characteristic);
+            if (!status) {
+                try {
+                    Thread.sleep(100, 0);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        } while ((!status) && (counter-- > 0));
+    }
+
+
+    private static void writeOTABootLoaderCommandNoResponse(BluetoothGattCharacteristic characteristic, byte[] value) {
+        if (BLEFramework.getBleFrameworkInstance().getCurrentGatt() == null) {
+            return;
+        }
+
+        final int mtuValue = 20;
+
+        int totalLength = value.length;
+        int localLength = 0;
+        byte[] localValue = new byte[mtuValue];
+
+        do {
+            try {
+                writeSemaphore.acquire();
+            } catch (InterruptedException ie) {
+                ie.printStackTrace();
+            }
+
+            if (totalLength >= mtuValue) {
+                for (int i = 0; i < mtuValue; i++) {
+                    localValue[i] = value[localLength + i];
+                }
+                characteristic.setValue(localValue);
+                totalLength -= mtuValue;
+                localLength += mtuValue;
+            } else {
+                byte[] lastValue = new byte[totalLength];
+                for (int i = 0; i < totalLength; i++) {
+                    lastValue[i] = value[localLength + i];
+                }
+                characteristic.setValue(lastValue);
+                totalLength = 0;
+            }
+
+            int counter = 20;
+            boolean status;
+
+            do {
+                characteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                status = BLEFramework.getBleFrameworkInstance().getCurrentGatt().writeCharacteristic(characteristic);
+                if (!status) {
+                    try {
+                        Thread.sleep(100, 0);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } while ((!status) && (counter-- > 0));
+
+            if (!status) {
+                writeSemaphore.release();
+            }
+        } while (totalLength > 0);
     }
 }
