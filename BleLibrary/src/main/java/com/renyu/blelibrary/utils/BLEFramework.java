@@ -101,7 +101,7 @@ public class BLEFramework {
     private BLEWriteErrorListener bleWriteErrorListener;
 
     // OTA标记
-    public static boolean isOTA = true;
+    public static boolean isOTA = false;
     // OTA服务所需Characteristic
     private BluetoothGattCharacteristic mOTACharacteristic;
     private static boolean mOtaExitBootloaderCmdInProgress = false;

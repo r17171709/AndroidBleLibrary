@@ -481,7 +481,21 @@ public class BLEService2 extends Service {
         bleFramework.setBleReadResponseListener(new BLEReadResponseListener() {
             @Override
             public void getResponseValues(UUID CharacUUID, byte[] value) {
-                Log.d("BLEService2", "read:");
+                if (Params.UUID_SERVICE_WristBand_DeviceInfoName.toString().equals(CharacUUID.toString())) {
+                    Log.d("BLEService2", "手环型号："+new String(value));
+                }
+                else if (Params.UUID_SERVICE_WristBand_DeviceInfoSN.toString().equals(CharacUUID.toString())) {
+                    Log.d("BLEService2", "SN："+new String(value));
+                }
+                else if (Params.UUID_SERVICE_WristBand_DeviceInfoHardware.toString().equals(CharacUUID.toString())) {
+                    Log.d("BLEService2", "硬件版本："+new String(value));
+                }
+                else if (Params.UUID_SERVICE_WristBand_DeviceInfoFirmware.toString().equals(CharacUUID.toString())) {
+                    Log.d("BLEService2", "BLE版本："+new String(value));
+                }
+                else if (Params.UUID_SERVICE_WristBand_DeviceInfoSoft.toString().equals(CharacUUID.toString())) {
+                    Log.d("BLEService2", "固件版本："+new String(value));
+                }
             }
         });
         // RSSI回调
@@ -563,9 +577,6 @@ public class BLEService2 extends Service {
             }
             if (intent.getStringExtra(Params.COMMAND).equals(Params.STOPSCAN)) {
                 bleFramework.stopScan(true);
-            }
-            if (intent.getStringExtra(Params.COMMAND).equals(Params.OTA)) {
-
             }
         }
         return super.onStartCommand(intent, flags, startId);
@@ -732,28 +743,6 @@ public class BLEService2 extends Service {
         BLEConnectModel bleConnectModel = new BLEConnectModel();
         bleConnectModel.setBleState(BLEFramework.getBleFrameworkInstance().getConnectionState());
         return bleConnectModel;
-    }
-
-    /**
-     * 进入OTA升级
-     *
-     * @param context
-     */
-    public static void enterOta(Context context) {
-        byte[] bytes = new byte[1];
-        bytes[0] = (byte) 0xa7;
-        sendWriteCommand(Params.UUID_SERVICE_OTA, Params.UUID_SERVICE_OTA_WRITE, bytes, context);
-    }
-
-    /**
-     * 开始OTA升级
-     *
-     * @param context
-     */
-    public static void startOTA(Context context) {
-        Intent intent = new Intent(context, BLEService2.class);
-        intent.putExtra(Params.COMMAND, Params.OTA);
-        context.startService(intent);
     }
 
     /**
