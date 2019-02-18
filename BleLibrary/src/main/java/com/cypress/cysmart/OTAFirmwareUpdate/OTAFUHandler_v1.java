@@ -37,7 +37,6 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
-import android.util.Log;
 
 import com.cypress.cysmart.BLEConnectionServices.BluetoothLeService;
 import com.cypress.cysmart.CommonUtils.CheckSumUtils;
@@ -45,6 +44,7 @@ import com.cypress.cysmart.CommonUtils.Constants;
 import com.cypress.cysmart.CommonUtils.ConvertUtils;
 import com.cypress.cysmart.CommonUtils.Utils;
 import com.cypress.cysmart.DataModelClasses.OTAFlashRowModel_v1;
+import com.cypress.cysmart.impl.IOTAListener;
 
 import java.util.Arrays;
 import java.util.List;
@@ -60,8 +60,9 @@ public class OTAFUHandler_v1 extends OTAFUHandlerBase {
     private Map<String, List<OTAFlashRowModel_v1>> mFileContents;
     private byte mCheckSumType;
     private final int mMaxDataSize;
+    private IOTAListener iotaListener;
 
-    public OTAFUHandler_v1(Activity activity, BluetoothGattCharacteristic otaCharacteristic, String filepath) {
+    public OTAFUHandler_v1(Activity activity, BluetoothGattCharacteristic otaCharacteristic, String filepath, IOTAListener iotaListener) {
         super(activity, otaCharacteristic, Constants.ACTIVE_APP_NO_CHANGE, Constants.NO_SECURITY_KEY, filepath);
         //Prefer WriteNoResponse over WriteWithResponse
         if ((otaCharacteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE) != 0) {
@@ -69,6 +70,7 @@ public class OTAFUHandler_v1 extends OTAFUHandlerBase {
         } else {
             this.mMaxDataSize = BootLoaderCommands_v1.WRITE_WITH_RESP_MAX_DATA_SIZE;
         }
+        this.iotaListener = iotaListener;
     }
 
     @Override
@@ -106,7 +108,8 @@ public class OTAFUHandler_v1 extends OTAFUHandlerBase {
 
     @Override
     public void processOTAStatus(String status, Bundle extras) {
-        Log.d("OTA", status);
+//        Log.d("OTA", status);
+        iotaListener.updateStatus(status);
         if (extras.containsKey(Constants.EXTRA_ERROR_OTA)) {
             String errorMessage = extras.getString(Constants.EXTRA_ERROR_OTA);
             // TODO: 2019/1/28 0028 alert_message_ota_error 
@@ -144,6 +147,7 @@ public class OTAFUHandler_v1 extends OTAFUHandlerBase {
             //Update progress bar
             int totalLines = dataRows.size();
             showProgress(rowNum, totalLines);
+            iotaListener.updateProgress(rowNum * 100 / totalLines);
             if (rowNum < totalLines) {//Process next row
                 Utils.setIntSharedPreference(getActivity(), Constants.PREF_PROGRAM_ROW_NO, rowNum);
                 Utils.setIntSharedPreference(getActivity(), Constants.PREF_PROGRAM_ROW_START_POS, 0);
@@ -175,6 +179,7 @@ public class OTAFUHandler_v1 extends OTAFUHandlerBase {
             //Update progress bar
             int totalLines = dataRows.size();
             showProgress(rowNum, totalLines);
+            iotaListener.updateProgress(rowNum * 100 / totalLines);
             if (rowNum < totalLines) {//Process next row
                 Utils.setIntSharedPreference(getActivity(), Constants.PREF_PROGRAM_ROW_NO, rowNum);
                 Utils.setIntSharedPreference(getActivity(), Constants.PREF_PROGRAM_ROW_START_POS, 0);

@@ -94,9 +94,9 @@ public class Main2Activity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 for (BLEDevice device : devices) {
-//                    BLEFramework.isOTA = true;
-//                    if (device.getDevice()!=null && device.getDevice().getName() != null && device.getDevice().getName().equals("ebaina-DFU")) {
-                    if (device.getDevice()!=null && device.getDevice().getName() != null && device.getDevice().getName().equals("ebaina")) {
+                    BLEFramework.isOTA = true;
+                    if (device.getDevice()!=null && device.getDevice().getName() != null && device.getDevice().getName().equals("ebaina-DFU")) {
+//                    if (device.getDevice()!=null && device.getDevice().getName() != null && device.getDevice().getName().equals("ebaina")) {
                         BLEService2.conn(Main2Activity.this, device.getDevice());
                         break;
                     }

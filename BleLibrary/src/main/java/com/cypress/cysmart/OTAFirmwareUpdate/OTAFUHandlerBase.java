@@ -34,7 +34,6 @@ package com.cypress.cysmart.OTAFirmwareUpdate;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.util.Log;
 
 public abstract class OTAFUHandlerBase implements OTAFUHandler {
     private Activity activity;
@@ -66,6 +65,6 @@ public abstract class OTAFUHandlerBase implements OTAFUHandler {
      */
     void showProgress(float fileLineNos, float totalLines) {
         // TODO: 2019/1/28 0028 进度
-        Log.d("OTA", ""+(int) ((fileLineNos / totalLines) * 100) + "%");
+//        Log.d("OTA", ""+(int) ((fileLineNos / totalLines) * 100) + "%");
     }
 }

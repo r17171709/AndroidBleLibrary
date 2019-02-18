@@ -37,7 +37,7 @@ package com.cypress.cysmart.OTAFirmwareUpdate;
 /**
  * Class created for bootloader command constants
  */
-class BootLoaderCommands_v1 {
+public class BootLoaderCommands_v1 {
 
     /* Command identifier for verifying the checksum value of the bootloadable project. */
     public static final int VERIFY_APP = 0x31;

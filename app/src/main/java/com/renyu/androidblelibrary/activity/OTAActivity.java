@@ -39,6 +39,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import com.cypress.cysmart.BLEConnectionServices.BluetoothLeService;
 import com.cypress.cysmart.CommonUtils.Constants;
@@ -47,6 +48,7 @@ import com.cypress.cysmart.CommonUtils.Utils;
 import com.cypress.cysmart.OTAFirmwareUpdate.OTAFUHandler;
 import com.cypress.cysmart.OTAFirmwareUpdate.OTAFUHandler_v0;
 import com.cypress.cysmart.OTAFirmwareUpdate.OTAFUHandler_v1;
+import com.cypress.cysmart.impl.IOTAListener;
 import com.renyu.blelibrary.utils.BLEFramework;
 
 import java.io.PrintWriter;
@@ -58,7 +60,7 @@ import java.lang.reflect.Proxy;
 /**
  * OTA update fragment
  */
-public class OTAActivity extends AppCompatActivity {
+public class OTAActivity extends AppCompatActivity implements IOTAListener {
     public static final String REGEX_MATCHES_CYACD2 = "(?i).*\\.cyacd2$";
 
     private static OTAFUHandler DUMMY_HANDLER = (OTAFUHandler) Proxy.newProxyInstance(OTAActivity.class.getClassLoader(), new Class<?>[]{OTAFUHandler.class}, new InvocationHandler() {
@@ -69,14 +71,14 @@ public class OTAActivity extends AppCompatActivity {
             try {
                 new RuntimeException().fillInStackTrace().printStackTrace(pw);
             } finally {
-                pw.close();//this will close StringWriter as well
+                pw.close();
             }
-            Logger.e("DUMMY_HANDLER: " + sw);//This is for developer to track the issue
+            Logger.e("DUMMY_HANDLER: " + sw);
             return null;
         }
     });
 
-    private OTAFUHandler mOTAFUHandler = DUMMY_HANDLER;//Initializing to DUMMY_HANDLER to avoid NPEs
+    private OTAFUHandler mOTAFUHandler = DUMMY_HANDLER;
 
     private BroadcastReceiver mGattOTAStatusReceiver = new BroadcastReceiver() {
         @Override
@@ -88,9 +90,6 @@ public class OTAActivity extends AppCompatActivity {
     };
 
     private void processOTAStatus(Intent intent) {
-        /**
-         * Shared preference to hold the state of the bootloader
-         */
         final String bootloaderState = Utils.getStringSharedPreference(this, Constants.PREF_BOOTLOADER_STATE);
         final String action = intent.getAction();
         Bundle extras = intent.getExtras();
@@ -104,7 +103,7 @@ public class OTAActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        String currentFilePath = "/storage/emulated/0/CySmart/Wristhand Demo 1.cyacd2";
+        String currentFilePath = "/storage/emulated/0/CySmart/Wristhand_Demo_0_1_DFU.cyacd2";
         mOTAFUHandler = createOTAFUHandler(BLEFramework.getBleFrameworkInstance().getOTACharacteristic(), (byte) -1, -1, currentFilePath);
         try {
             if (BLEFramework.getBleFrameworkInstance().getOTACharacteristic() != null) {
@@ -124,7 +123,7 @@ public class OTAActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         if (mOTAFUHandler != DUMMY_HANDLER) {
-            mOTAFUHandler.setPrepareFileWriteEnabled(false);//This is expected case. onDestroy might be invoked before the file to upgrade is selected.
+            mOTAFUHandler.setPrepareFileWriteEnabled(false);
         }
         unregisterReceiver(mGattOTAStatusReceiver);
         super.onDestroy();
@@ -137,7 +136,7 @@ public class OTAActivity extends AppCompatActivity {
         OTAFUHandler handler = DUMMY_HANDLER;
         if (otaCharacteristic != null && filepath != null && filepath != "") {
             handler = isCyacd2File
-                    ? new OTAFUHandler_v1(this, otaCharacteristic, filepath)
+                    ? new OTAFUHandler_v1(this, otaCharacteristic, filepath, this)
                     : new OTAFUHandler_v0(this, otaCharacteristic, activeApp, securityKey, filepath);
         }
         return handler;
@@ -145,5 +144,15 @@ public class OTAActivity extends AppCompatActivity {
 
     private boolean isCyacd2File(String file) {
         return file.matches(REGEX_MATCHES_CYACD2);
+    }
+
+    @Override
+    public void updateProgress(int progress) {
+        Log.d("BLE_SERVICE_OTA", "progress: "+progress);
+    }
+
+    @Override
+    public void updateStatus(String status) {
+        Log.d("BLE_SERVICE_OTA", "status: "+status);
     }
 }
